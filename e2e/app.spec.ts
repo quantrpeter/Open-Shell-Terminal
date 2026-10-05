@@ -32,9 +32,34 @@ test.afterAll(async () => {
 test('runs a command and shows records as a table', async () => {
 	await runLine(`cd '${sandbox}'`)
 	await expect(page.locator('.prompt-cwd')).toContainText('oshell-e2e-')
+	// cd prints nothing.
+	const cdBlock = page.locator('.block').last()
+	await expect(cdBlock).toHaveClass(/quiet/)
+	await expect(cdBlock.locator('table')).toHaveCount(0)
 	await runLine('ls')
 	await expect(page.locator('.table-row', { hasText: 'alpha' })).toBeVisible()
 	await expect(page.locator('.table-row', { hasText: 'note.txt' })).toBeVisible()
+})
+
+test('tables show every row without a filter box or inner scrollbar', async () => {
+	await runLine('ls | take 3')
+	const block = page.locator('.block').last()
+	await expect(block.locator('tbody tr')).toHaveCount(3)
+	await expect(block.locator('.filter')).toHaveCount(0)
+	await block.getByRole('button', { name: 'Filter' }).click()
+	await expect(block.locator('.filter')).toBeVisible()
+	await page.keyboard.press('Escape')
+	await expect(block.locator('.filter')).toHaveCount(0)
+	const scrolls = await block.locator('.table-wrap').evaluate((el) => el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY !== 'visible')
+	expect(scrolls).toBe(false)
+})
+
+test('the prompt follows the last block instead of sticking to the bottom', async () => {
+	const last = await page.locator('.block').last().boundingBox()
+	const prompt = await page.locator('.prompt').first().boundingBox()
+	const viewport = page.viewportSize()
+	expect(prompt!.y).toBeGreaterThanOrEqual(last!.y + last!.height - 1)
+	expect(prompt!.y).toBeLessThan((viewport?.height ?? 900) - 120)
 })
 
 test('explorer follows the cwd and clicking a folder cds into it', async () => {

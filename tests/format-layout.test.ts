@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classify, columnsOf, compareValues, formatCell, formatDuration, humanSize, toCsv } from '../src/renderer/src/lib/format'
+import { classify, columnsOf, compareValues, formatCell, formatDuration, humanSize, isQuietLine, toCsv } from '../src/renderer/src/lib/format'
 import { paneIds, removePane, splitPane, type LayoutNode } from '../src/renderer/src/lib/layout'
 
 describe('format', () => {
@@ -38,6 +38,14 @@ describe('format', () => {
 		expect(formatDuration(12)).toBe('12ms')
 		expect(formatDuration(1500)).toBe('1.50s')
 		expect(formatDuration(12000)).toBe('12.0s')
+	})
+	it('isQuietLine only matches a plain cd', () => {
+		expect(isQuietLine('cd')).toBe(true)
+		expect(isQuietLine("cd '/a b'")).toBe(true)
+		expect(isQuietLine('  cd ..')).toBe(true)
+		expect(isQuietLine('cdrom')).toBe(false)
+		expect(isQuietLine('cd x | take 1')).toBe(false)
+		expect(isQuietLine('ls')).toBe(false)
 	})
 })
 

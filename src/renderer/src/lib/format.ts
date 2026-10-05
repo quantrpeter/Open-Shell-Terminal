@@ -101,3 +101,8 @@ export function classify(records: unknown[]): Classified {
 export function formatDuration(ms: number): string {
 	return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(ms < 10000 ? 2 : 1)}s`
 }
+
+// Commands whose output is not worth showing: a plain `cd`, not part of a pipeline.
+export function isQuietLine(line: string): boolean {
+	return /^\s*cd(\s|$)/.test(line) && !line.includes('|')
+}

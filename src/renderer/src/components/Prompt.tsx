@@ -23,8 +23,23 @@ export function Prompt({ paneId }: { paneId: string }): React.JSX.Element {
 	const [value, setValue] = useState('')
 	const [popup, setPopup] = useState<Popup | null>(null)
 	const input = useRef<HTMLInputElement>(null)
+	const root = useRef<HTMLDivElement>(null)
+	const popupBox = useRef<HTMLDivElement>(null)
+	const [below, setBelow] = useState(false)
 	const cursor = useRef(-1)
 	const draft = useRef('')
+
+	// The prompt can sit near the top of the output, so open the list downward then.
+	useEffect(() => {
+		if (!popup || !root.current) return
+		const area = root.current.closest('.blocks')
+		const room = root.current.getBoundingClientRect().top - (area?.getBoundingClientRect().top ?? 0)
+		setBelow(room < 220)
+	}, [popup?.items])
+
+	useEffect(() => {
+		if (popup && below) popupBox.current?.scrollIntoView({ block: 'nearest' })
+	}, [popup?.items, below])
 
 	useEffect(() => {
 		if (focused && pane?.ready) input.current?.focus()
@@ -118,9 +133,9 @@ export function Prompt({ paneId }: { paneId: string }): React.JSX.Element {
 	const label = pane.cwd.length > 40 ? '\u2026' + pane.cwd.slice(-39) : pane.cwd
 
 	return (
-		<div className="prompt">
+		<div className="prompt" ref={root}>
 			{popup && (
-				<div className="popup">
+				<div className={below ? 'popup below' : 'popup'} ref={popupBox}>
 					{popup.items.map((item, index) => (
 						<div
 							key={item}

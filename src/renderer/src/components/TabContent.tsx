@@ -39,6 +39,12 @@ function PaneView({ paneId }: { paneId: string }): React.JSX.Element {
 					const el = event.currentTarget
 					stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60
 				}}
+				onClick={(event) => {
+					// Clicking empty space puts the cursor back in the prompt.
+					if (window.getSelection()?.toString()) return
+					if ((event.target as HTMLElement).closest('button, input, th, .link')) return
+					scroller.current?.querySelector<HTMLInputElement>('.prompt-input')?.focus()
+				}}
 			>
 				{pane.error ? (
 					<div className="error">
@@ -53,8 +59,8 @@ function PaneView({ paneId }: { paneId: string }): React.JSX.Element {
 				{pane.blocks.map((block) => (
 					<BlockView key={block.id} paneId={paneId} block={block} />
 				))}
+				<Prompt paneId={paneId} />
 			</div>
-			<Prompt paneId={paneId} />
 		</div>
 	)
 }

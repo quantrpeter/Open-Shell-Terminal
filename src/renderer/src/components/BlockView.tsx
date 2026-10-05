@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { classify, formatDuration, toCsv } from '../lib/format'
+import { classify, formatDuration, isQuietLine, toCsv } from '../lib/format'
 import { shellQuote } from '../../../shared/quote'
 import { useStore, type Block } from '../store'
 import { RecordTable } from './RecordTable'
@@ -29,16 +29,27 @@ export function BlockView({ paneId, block }: { paneId: string; block: Block }): 
 	const { cancel, removeBlock, run } = useStore.getState()
 	const windows = useStore((s) => s.app?.platform === 'win32')
 	const [raw, setRaw] = useState(false)
+	const [filterOpen, setFilterOpen] = useState(false)
+	const [filter, setFilter] = useState('')
 	const view = useMemo(() => classify(block.records), [block.records, block.version])
+	const quiet = isQuietLine(block.line)
 
 	const body = (): React.JSX.Element | null => {
+		if (quiet) return null
 		if (raw && block.records.length > 0) {
 			const text = JSON.stringify(block.records, null, 2)
 			return <pre className="raw">{text.length > MAX_JSON_CHARS ? text.slice(0, MAX_JSON_CHARS) + '\n\u2026 truncated' : text}</pre>
 		}
 		switch (view.kind) {
 			case 'table':
-				return <RecordTable rows={view.rows} version={block.version} onCd={(path) => run(paneId, `cd ${shellQuote(path, windows)}`)} />
+				return (
+					<RecordTable
+						rows={view.rows}
+						version={block.version}
+						filter={filter}
+						onCd={(path) => run(paneId, `cd ${shellQuote(path, windows)}`)}
+					/>
+				)
 			case 'log': {
 				const rows = view.rows.length > MAX_LOG_LINES ? view.rows.slice(-MAX_LOG_LINES) : view.rows
 				return (
@@ -67,35 +78,61 @@ export function BlockView({ paneId, block }: { paneId: string; block: Block }): 
 		block.status === 'running'
 			? 'running'
 			: `${block.status} \u00b7 ${block.summary?.count ?? 0} \u00b7 ${formatDuration(block.summary?.ms ?? 0)}`
+	const hasData = !quiet && view.kind !== 'empty'
 
 	return (
-		<div className={`block ${block.status}`}>
+		<div className={`block ${block.status}${quiet ? ' quiet' : ''}`}>
 			<div className="block-head">
 				<div className="block-cmd" title={block.line}>
 					<span className="muted">{block.cwd}&gt; </span>
 					{block.line}
 				</div>
 				<span className={`status ${block.status}`}>{statusText}</span>
-				{block.status === 'running' ? (
+				{block.status === 'running' && (
 					<button className="btn" onClick={() => cancel(paneId, block.id)}>
 						Cancel
 					</button>
-				) : (
-					<button className="btn" onClick={() => run(paneId, block.line)}>
-						Re-run
-					</button>
 				)}
-				{view.kind !== 'empty' && (
-					<button className="btn" onClick={() => setRaw((value) => !value)}>
-						{raw ? 'View' : 'JSON'}
+				<div className="block-actions">
+					{block.status !== 'running' && (
+						<button className="btn" onClick={() => run(paneId, block.line)}>
+							Re-run
+						</button>
+					)}
+					{hasData && view.kind === 'table' && !raw && (
+						<button className={filterOpen ? 'btn active' : 'btn'} onClick={() => setFilterOpen((open) => !open)}>
+							Filter
+						</button>
+					)}
+					{hasData && (
+						<button className="btn" onClick={() => setRaw((value) => !value)}>
+							{raw ? 'View' : 'JSON'}
+						</button>
+					)}
+					{hasData && <CopyButton label="Copy" text={() => JSON.stringify(block.records, null, 2)} />}
+					{hasData && view.kind === 'table' && <CopyButton label="CSV" text={() => toCsv(view.rows)} />}
+					<button className="btn" title="Remove block" onClick={() => removeBlock(paneId, block.id)}>
+						&times;
 					</button>
-				)}
-				{view.kind !== 'empty' && <CopyButton label="Copy" text={() => JSON.stringify(block.records, null, 2)} />}
-				{view.kind === 'table' && <CopyButton label="CSV" text={() => toCsv(view.rows)} />}
-				<button className="btn" title="Remove block" onClick={() => removeBlock(paneId, block.id)}>
-					&times;
-				</button>
+				</div>
 			</div>
+			{filterOpen && hasData && view.kind === 'table' && !raw && (
+				<div className="filter-row">
+					<input
+						className="filter"
+						autoFocus
+						placeholder="Filter rows"
+						value={filter}
+						onChange={(event) => setFilter(event.target.value)}
+						onKeyDown={(event) => {
+							if (event.key === 'Escape') {
+								setFilter('')
+								setFilterOpen(false)
+							}
+						}}
+					/>
+				</div>
+			)}
 			{block.errors.map((error, index) => (
 				<div key={index} className="error">
 					<span>
@@ -105,7 +142,7 @@ export function BlockView({ paneId, block }: { paneId: string; block: Block }): 
 				</div>
 			))}
 			{body()}
-			{view.kind === 'empty' && block.status === 'done' && block.errors.length === 0 && (
+			{!quiet && view.kind === 'empty' && block.status === 'done' && block.errors.length === 0 && (
 				<div className="empty muted">(no records)</div>
 			)}
 		</div>
