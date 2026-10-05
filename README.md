@@ -28,3 +28,9 @@ npm run dist         # copies the engine, builds, runs electron-builder
 ```
 
 Packaged builds ship a standalone Python 3.12 runtime. `npm run dist` downloads it for the current OS and CPU (`npm run fetch:python`), copies the engine, builds and runs electron-builder. Set `OSHELL_TARGET` (for example `win32-x64`) to fetch another platform's runtime. See [skills/1. plan.md](skills/1.%20plan.md) for status.
+
+# Notes
+
+if you reach this bug, run `node node_modules/electron/install.js`
+
+![](/image/Screenshot%202026-10-06%20at%205.45.13 AM.png)
