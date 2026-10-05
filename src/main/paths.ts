@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join, isAbsolute, resolve } from 'node:path'
 
 export interface EngineCommand {
 	python: string
@@ -36,8 +36,11 @@ export function resolveEngine(options: ResolveOptions): EngineCommand {
 }
 
 export function engineProblem(command: EngineCommand): string | null {
+	if (isAbsolute(command.python) && !existsSync(command.python)) {
+		return `Python runtime not found at ${command.python}. Run "npm run fetch:python" before "npm run dist", or set OSHELL_PYTHON.`
+	}
 	if (!existsSync(command.script)) {
-		return `Open Shell engine not found at ${command.script}. Set OSHELL_ENGINE to openshell.py.`
+		return `Open Shell engine not found at ${command.script}. Run "npm run prepare:engine", or set OSHELL_ENGINE to openshell.py.`
 	}
 	return null
 }

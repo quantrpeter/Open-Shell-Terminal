@@ -27,4 +27,4 @@ npm run test:e2e     # builds, then drives the Electron app with Playwright
 npm run dist         # copies the engine, builds, runs electron-builder
 ```
 
-Packaged builds expect a standalone Python runtime in `resources/python` (not fetched yet). See [skills/1. plan.md](skills/1.%20plan.md) for status.
+Packaged builds ship a standalone Python 3.12 runtime. `npm run dist` downloads it for the current OS and CPU (`npm run fetch:python`), copies the engine, builds and runs electron-builder. Set `OSHELL_TARGET` (for example `win32-x64`) to fetch another platform's runtime. See [skills/1. plan.md](skills/1.%20plan.md) for status.

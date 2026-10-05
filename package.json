@@ -35,7 +35,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test",
-    "dist": "npm run prepare:engine && npm run build && electron-builder",
-    "prepare:engine": "node scripts/prepare-engine.mjs"
+    "dist": "npm run fetch:python && npm run prepare:engine && npm run build && electron-builder",
+    "prepare:engine": "node scripts/prepare-engine.mjs",
+    "fetch:python": "node scripts/fetch-python.mjs"
   }
 }

@@ -128,7 +128,9 @@ export const useStore = create<Store>((set, get) => {
 				}
 			})
 			.catch((error: unknown) => {
-				const message = error && typeof error === 'object' && 'message' in error ? String(error.message) : String(error)
+				const raw = error && typeof error === 'object' && 'message' in error ? String(error.message) : String(error)
+				// Electron prefixes errors from ipcMain.handle with the channel name.
+				const message = raw.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
 				patchPane(paneId, (pane) => ({ ...pane, error: message }))
 			})
 	}

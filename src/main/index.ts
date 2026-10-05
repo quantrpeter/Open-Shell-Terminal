@@ -34,6 +34,16 @@ function engineFor(paneId: string): EngineProcess {
 	return engine
 }
 
+// ipcMain.handle only passes a thrown Error's message to the renderer; plain objects become "[object Object]".
+function readable(error: unknown): Error {
+	if (error instanceof Error) return error
+	if (error && typeof error === 'object' && 'message' in error) {
+		const { message, hint } = error as { message: unknown; hint?: unknown }
+		return new Error(hint ? `${String(message)} (${String(hint)})` : String(message))
+	}
+	return new Error(String(error))
+}
+
 function registerIpc(): void {
 	ipcMain.handle('app:info', (): AppInfo => ({
 		platform: process.platform,
@@ -44,13 +54,17 @@ function registerIpc(): void {
 
 	ipcMain.handle('pane:open', async (_event, paneId: unknown, cwd: unknown) => {
 		const id = str(paneId, 'paneId')
+		const problem = engineProblem(engineCommand)
+		if (problem) throw new Error(problem)
 		engines.get(id)?.dispose()
 		const engine = new EngineProcess({
 			command: engineCommand,
 			cwd: typeof cwd === 'string' && cwd ? cwd : homedir()
 		})
 		engines.set(id, engine)
-		return engine.info()
+		return engine.info().catch((error) => {
+			throw readable(error)
+		})
 	})
 
 	ipcMain.handle('pane:close', (_event, paneId: unknown) => {
@@ -78,10 +92,20 @@ function registerIpc(): void {
 	})
 
 	ipcMain.handle('pane:complete', (_event, paneId: unknown, line: unknown, cursor: unknown) =>
-		engineFor(str(paneId, 'paneId')).complete(typeof line === 'string' ? line : '', typeof cursor === 'number' ? cursor : 0)
+		engineFor(str(paneId, 'paneId'))
+			.complete(typeof line === 'string' ? line : '', typeof cursor === 'number' ? cursor : 0)
+			.catch((error) => {
+				throw readable(error)
+			})
 	)
 
-	ipcMain.handle('pane:history', (_event, paneId: unknown) => engineFor(str(paneId, 'paneId')).history())
+	ipcMain.handle('pane:history', (_event, paneId: unknown) =>
+		engineFor(str(paneId, 'paneId'))
+			.history()
+			.catch((error) => {
+				throw readable(error)
+			})
+	)
 
 	ipcMain.handle('fs:list', (_event, dir: unknown, showHidden: unknown) => listDir(str(dir, 'dir'), showHidden === true))
 	ipcMain.handle('fs:setWatched', (_event, dirs: unknown) => {
