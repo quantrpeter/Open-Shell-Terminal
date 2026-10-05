@@ -1,0 +1,21 @@
+appId: dev.openshell.terminal
+productName: Open Shell Terminal
+directories:
+  output: dist
+files:
+  - out/**
+  - package.json
+# resources/python is the per-OS standalone CPython runtime, fetched at release time.
+extraResources:
+  - from: resources/engine
+    to: engine
+  - from: resources/python
+    to: python
+mac:
+  category: public.app-category.developer-tools
+  target: [dmg, zip]
+win:
+  target: [nsis]
+linux:
+  category: Utility
+  target: [AppImage, deb]

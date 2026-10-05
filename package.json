@@ -1,0 +1,41 @@
+{
+  "name": "open-shell-terminal",
+  "productName": "Open Shell Terminal",
+  "version": "0.0.1",
+  "description": "A standalone GUI terminal for Open Shell",
+  "main": "./out/main/index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.14.13",
+    "allotment": "^1.20.5",
+    "cmdk": "^1.1.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.6",
+    "vitest": "^5.0.3"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "npm run build && playwright test",
+    "dist": "npm run prepare:engine && npm run build && electron-builder",
+    "prepare:engine": "node scripts/prepare-engine.mjs"
+  }
+}

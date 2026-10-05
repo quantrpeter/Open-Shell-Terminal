@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noEmit": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"types": ["node"]
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		"tests/**/*.ts",
+		"e2e/**/*.ts",
+		"electron.vite.config.ts",
+		"vitest.config.ts"
+	]
+}
