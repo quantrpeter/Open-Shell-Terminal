@@ -800,3 +800,31 @@ table.records tr.table-row:hover td {
 	padding: 6px 12px 10px;
 	font-size: 11px;
 }
+.python-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	padding: 7px 12px;
+	background: none;
+	border: none;
+	border-bottom: 1px solid var(--border);
+	color: var(--text);
+	font: inherit;
+	font-size: 12px;
+	text-align: left;
+	cursor: pointer;
+}
+.python-row:hover,
+.python-row.active {
+	background: var(--accent);
+	color: #fff;
+}
+.python-row:hover .muted,
+.python-row.active .muted {
+	color: rgba(255, 255, 255, 0.8);
+}
+.python-row:disabled {
+	opacity: 0.6;
+	cursor: default;
+}

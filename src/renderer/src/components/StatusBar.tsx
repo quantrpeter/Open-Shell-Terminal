@@ -4,6 +4,7 @@ const NEXT: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'syst
 
 export function StatusBar(): React.JSX.Element {
 	const version = useStore((s) => s.version)
+	const python = useStore((s) => s.python)
 	const platform = useStore((s) => s.app?.platform ?? '')
 	const theme = useStore((s) => s.theme)
 	const cwd = useStore((s) => {
@@ -36,6 +37,13 @@ export function StatusBar(): React.JSX.Element {
 			{running > 0 && <span className="status-running">{running} running</span>}
 			<button className="status-btn" onClick={() => state().setTheme(NEXT[theme])} title="Theme">
 				Theme: {theme}
+			</button>
+			<button
+				className="status-btn"
+				onClick={() => state().toggle('pythonOpen')}
+				title={python?.path || 'Choose the Python that runs Open Shell'}
+			>
+				{python?.version ? `Python ${python.version}` : 'Python'}
 			</button>
 			<span className="muted">
 				{version ? `Open Shell ${version}` : ''} {platform}

@@ -1,10 +1,21 @@
-import { existsSync } from 'node:fs'
-import { join, isAbsolute, resolve } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { existsSync, readFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { delimiter, join, isAbsolute, resolve } from 'node:path'
 
 export interface EngineCommand {
 	python: string
 	script: string
 }
+
+export interface PythonChoice {
+	path: string
+	version: string
+	label: string
+	source: 'selected' | 'default' | 'bundled' | 'path'
+}
+
+const CONFIG = 'python.json'
 
 export interface ResolveOptions {
 	packaged: boolean
@@ -43,4 +54,63 @@ export function engineProblem(command: EngineCommand): string | null {
 		return `Open Shell engine not found at ${command.script}. Run "npm run prepare:engine", or set OSHELL_ENGINE to openshell.py.`
 	}
 	return null
+}
+
+export function pythonConfigPath(userData: string): string {
+	return join(userData, CONFIG)
+}
+
+export function readPythonChoice(userData: string): string | null {
+	try {
+		const parsed = JSON.parse(readFileSync(pythonConfigPath(userData), 'utf8')) as { python?: unknown }
+		return typeof parsed.python === 'string' && parsed.python.length > 0 ? parsed.python : null
+	} catch {
+		return null
+	}
+}
+
+// A GUI launch does not inherit the terminal PATH, so also look in the usual install locations.
+export function pythonNames(platform: NodeJS.Platform): string[] {
+	return platform === 'win32' ? ['python.exe', 'python3.exe'] : ['python3', 'python']
+}
+
+// `python3` is not always the newest install; Homebrew also ships `python3.14`.
+export function isPythonExecutable(name: string, platform: NodeJS.Platform): boolean {
+	if (platform === 'win32') return /^python(\d+(\.\d+)?)?\.exe$/i.test(name)
+	return /^python(\d+(\.\d+)?)?$/.test(name)
+}
+
+export function pythonSearchDirs(platform: NodeJS.Platform, env: NodeJS.ProcessEnv): string[] {
+	const home = env.HOME || env.USERPROFILE || homedir()
+	const fromPath = (env.PATH ?? '').split(delimiter).filter(Boolean)
+	const extra =
+		platform === 'win32'
+			? [
+					join(env.LOCALAPPDATA ?? join(home, 'AppData', 'Local'), 'Programs', 'Python'),
+					join(home, 'AppData', 'Local', 'Programs', 'Python')
+				]
+			: platform === 'darwin'
+				? ['/usr/local/bin', '/opt/homebrew/bin', '/usr/bin', join(home, '.local', 'bin')]
+				: ['/usr/local/bin', '/usr/bin', join(home, '.local', 'bin')]
+	return [...new Set([...fromPath, ...extra])]
+}
+
+export function pythonVersion(executable: string): string | null {
+	try {
+		const out = execFileSync(executable, ['-c', 'import sys; print(sys.version.split()[0])'], {
+			encoding: 'utf8',
+			timeout: 4000,
+			windowsHide: true,
+			stdio: ['ignore', 'pipe', 'ignore']
+		}).trim()
+		return /^\d+\.\d+/.test(out) ? out : null
+	} catch {
+		return null
+	}
+}
+
+export function describePython(path: string, source: PythonChoice['source'], version = pythonVersion(path)): PythonChoice | null {
+	if (!version) return null
+	const where = source === 'bundled' ? 'bundled' : source === 'default' ? 'default' : path
+	return { path, version, label: `Python ${version}  ${where}`, source }
 }

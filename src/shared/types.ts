@@ -70,25 +70,39 @@ export type Preview =
 	| { kind: 'dir'; name: string }
 	| { kind: 'error'; name: string; message: string }
 
+export interface PythonRuntime {
+	path: string
+	version: string
+	label: string
+	source: 'selected' | 'default' | 'bundled' | 'path'
+}
+
 export interface AppInfo {
 	platform: NodeJS.Platform
 	home: string
 	sep: string
 	engineHint: string
+	python: PythonRuntime
+	runtimes: PythonRuntime[]
 }
 
 export interface OshellApi {
-	app: { info(): Promise<AppInfo> }
+	app: {
+		info(): Promise<AppInfo>
+		runtimes(): Promise<{ python: PythonRuntime; runtimes: PythonRuntime[] }>
+		setPython(path: string): Promise<{ python: PythonRuntime; runtimes: PythonRuntime[] }>
+		pickPython(): Promise<string | null>
+	}
 	pane: {
-		open(paneId: string, cwd?: string): Promis
-		settings(paneId: string): Promise<Setting[]>
-		setSetting(paneId: string, name: string, value: string): Promise<Setting[]>
-		deleteSetting(paneId: string, name: string): Promise<Setting[]>e<EngineInfo>
+		open(paneId: string, cwd?: string): Promise<EngineInfo>
 		close(paneId: string): Promise<void>
 		run(paneId: string, runId: string, line: string): Promise<void>
 		cancel(paneId: string, runId: string): Promise<void>
 		complete(paneId: string, line: string, cursor: number): Promise<CompleteResult>
 		history(paneId: string): Promise<string[]>
+		settings(paneId: string): Promise<Setting[]>
+		setSetting(paneId: string, name: string, value: string): Promise<Setting[]>
+		deleteSetting(paneId: string, name: string): Promise<Setting[]>
 		onEvent(listener: (event: PaneEvent) => void): () => void
 	}
 	fs: {

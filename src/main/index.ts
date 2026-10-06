@@ -1,18 +1,90 @@
-import { app, BrowserWindow, ipcMain, shell, session, type WebContents } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell, session, type WebContents } from 'electron'
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join, sep } from 'node:path'
-import type { AppInfo, PaneEvent } from '../shared/types'
+import { delimiter, join, sep } from 'node:path'
+import type { AppInfo, PaneEvent, PythonRuntime } from '../shared/types'
 import { EngineProcess } from './engine'
 import { DirWatcher, listDir, readPreview } from './fs'
-import { engineProblem, resolveEngine } from './paths'
+import {
+	describePython,
+	engineProblem,
+	isPythonExecutable,
+	pythonSearchDirs,
+	pythonVersion,
+	readPythonChoice,
+	resolveEngine,
+	type EngineCommand,
+	type PythonChoice
+} from './paths'
 
-const engineCommand = resolveEngine({
-	packaged: app.isPackaged,
-	resourcesPath: process.resourcesPath,
-	appRoot: app.getAppPath(),
-	platform: process.platform,
-	env: process.env
-})
+let engineCommand: EngineCommand = { python: '', script: '' }
+let selectedPython: string | null = null
+
+function commandFor(python?: string): EngineCommand {
+	const base = resolveEngine({
+		packaged: app.isPackaged,
+		resourcesPath: process.resourcesPath,
+		appRoot: app.getAppPath(),
+		platform: process.platform,
+		env: process.env
+	})
+	return python ? { ...base, python } : base
+}
+
+function applyPythonChoice(): void {
+	selectedPython = process.env.OSHELL_PYTHON ? null : readPythonChoice(app.getPath('userData'))
+	engineCommand = commandFor(selectedPython ?? undefined)
+}
+
+function runtimeInfo(): { python: PythonRuntime; runtimes: PythonRuntime[] } {
+	const current = describePython(engineCommand.python, selectedPython ? 'selected' : app.isPackaged ? 'bundled' : 'default')
+	const python: PythonRuntime = current ?? {
+		path: engineCommand.python,
+		version: '',
+		label: engineCommand.python,
+		source: selectedPython ? 'selected' : 'default'
+	}
+	return { python, runtimes: discoverRuntimes(python) }
+}
+
+function discoverRuntimes(current: PythonRuntime): PythonRuntime[] {
+	const found = new Map<string, PythonRuntime>()
+	const add = (choice: PythonChoice | null): void => {
+		if (!choice || found.has(choice.path)) return
+		found.set(choice.path, choice)
+	}
+	add(current.version ? { ...current, source: selectedPython ? 'selected' : current.source } : null)
+	if (app.isPackaged) add(describePython(commandFor().python, 'bundled'))
+	else add(describePython(commandFor().python, 'default'))
+
+	for (const dir of pythonSearchDirs(process.platform, shellPath())) {
+		let names: string[] = []
+		try {
+			names = readdirSync(dir).filter((name) => isPythonExecutable(name, process.platform))
+		} catch {
+			continue
+		}
+		for (const name of names) add(describePython(join(dir, name), 'path'))
+	}
+	return [...found.values()].sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true }))
+}
+
+// `npm run dev` from a terminal has the user's PATH; a Dock launch does not.
+function shellPath(): NodeJS.ProcessEnv {
+	if (process.platform === 'win32' || process.env.OSHELL_SKIP_LOGIN_PATH === '1') return process.env
+	try {
+		const login = execFileSync(process.env.SHELL || '/bin/zsh', ['-lic', 'printf %s "$PATH"'], {
+			encoding: 'utf8',
+			timeout: 4000,
+			stdio: ['ignore', 'pipe', 'ignore']
+		})
+		const path = [login, process.env.PATH].filter(Boolean).join(delimiter)
+		return { ...process.env, PATH: path }
+	} catch {
+		return process.env
+	}
+}
 
 const engines = new Map<string, EngineProcess>()
 let window: BrowserWindow | null = null
@@ -49,8 +121,36 @@ function registerIpc(): void {
 		platform: process.platform,
 		home: homedir(),
 		sep,
-		engineHint: engineProblem(engineCommand) ?? ''
+		engineHint: engineProblem(engineCommand) ?? '',
+		...runtimeInfo()
 	}))
+
+	ipcMain.handle('app:runtimes', () => runtimeInfo())
+
+	ipcMain.handle('app:setPython', async (_event, pythonPath: unknown) => {
+		const picked = typeof pythonPath === 'string' ? pythonPath : ''
+		if (picked && !pythonVersion(picked)) throw new Error(`${picked || 'that file'} is not a working Python`)
+		const dir = app.getPath('userData')
+		mkdirSync(dir, { recursive: true })
+		writeFileSync(join(dir, 'python.json'), JSON.stringify({ python: picked }, null, 2))
+		applyPythonChoice()
+		const problem = engineProblem(engineCommand)
+		if (problem) throw new Error(problem)
+		for (const engine of engines.values()) engine.dispose()
+		engines.clear()
+		return runtimeInfo()
+	})
+
+	ipcMain.handle('app:pickPython', async () => {
+		const parent = BrowserWindow.getFocusedWindow() ?? undefined
+		const result = await dialog.showOpenDialog(parent!, {
+			title: 'Choose a Python executable',
+			properties: ['openFile'],
+			buttonLabel: 'Use this Python'
+		})
+		if (result.canceled || !result.filePaths[0]) return null
+		return result.filePaths[0]
+	})
 
 	ipcMain.handle('pane:open', async (_event, paneId: unknown, cwd: unknown) => {
 		const id = str(paneId, 'paneId')
@@ -127,14 +227,14 @@ function registerIpc(): void {
 			})
 	)
 
-	ipcMain.handle('pane:settings:set', (_event, paneId: unknown, name: unknown, value: unknown) =>
+	ipcMain.handle('pane:settings:set', (_event, _paneId: unknown, name: unknown, value: unknown) =>
 		reloadSettings((engine) => engine.setSetting(str(name, 'name'), typeof value === 'string' ? value : ''))
 			.catch((error) => {
 				throw readable(error)
 			})
 	)
 
-	ipcMain.handle('pane:settings:delete', (_event, paneId: unknown, name: unknown) =>
+	ipcMain.handle('pane:settings:delete', (_event, _paneId: unknown, name: unknown) =>
 		reloadSettings((engine) => engine.deleteSetting(str(name, 'name')))
 			.catch((error) => {
 				throw readable(error)
@@ -202,6 +302,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+	applyPythonChoice()
 	hardenSession()
 	registerIpc()
 	createWindow()

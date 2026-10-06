@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { isPythonExecutable, pythonNames } from '../src/main/paths'
 import { basename, breadcrumbs, chain, dirname, isRoot, isUnder, join, samePath } from '../src/shared/paths'
 import { shellQuote } from '../src/shared/quote'
 
@@ -50,6 +51,16 @@ describe('paths (Windows)', () => {
 	it('join uses backslashes', () => {
 		expect(join('C:\\Users', 'me')).toBe('C:\\Users\\me')
 		expect(join('C:\\', 'me')).toBe('C:\\me')
+	})
+})
+
+describe('python executable names', () => {
+	it('accepts versioned interpreters and rejects lookalikes', () => {
+		expect(pythonNames('darwin')).toEqual(['python3', 'python'])
+		expect(isPythonExecutable('python3.14', 'darwin')).toBe(true)
+		expect(isPythonExecutable('python3', 'win32')).toBe(false)
+		expect(isPythonExecutable('python3.14.exe', 'win32')).toBe(true)
+		expect(isPythonExecutable('python3-config', 'darwin')).toBe(false)
 	})
 })
 

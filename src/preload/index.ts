@@ -2,7 +2,12 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { OshellApi, PaneEvent } from '../shared/types'
 
 const api: OshellApi = {
-	app: { info: () => ipcRenderer.invoke('app:info') },
+	app: {
+		info: () => ipcRenderer.invoke('app:info'),
+		runtimes: () => ipcRenderer.invoke('app:runtimes'),
+		setPython: (path) => ipcRenderer.invoke('app:setPython', path),
+		pickPython: () => ipcRenderer.invoke('app:pickPython')
+	},
 	pane: {
 		open: (paneId, cwd) => ipcRenderer.invoke('pane:open', paneId, cwd),
 		close: (paneId) => ipcRenderer.invoke('pane:close', paneId),

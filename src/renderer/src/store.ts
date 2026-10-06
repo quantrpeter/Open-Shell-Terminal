@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AppInfo, CommandInfo, EngineInfo, PaneEvent, RunSummary, ShellErrorRecord } from '../../shared/types'
+import type { AppInfo, CommandInfo, EngineInfo, PaneEvent, PythonRuntime, RunSummary, ShellErrorRecord } from '../../shared/types'
 import { isUnder, samePath } from '../../shared/paths'
 import { shellQuote } from '../../shared/quote'
 import { paneIds, removePane, splitPane, type Direction, type LayoutNode } from './lib/layout'
@@ -56,6 +56,9 @@ interface Store {
 	theme: Theme
 	paletteOpen: boolean
 	settingsOpen: boolean
+	pythonOpen: boolean
+	python: PythonRuntime | null
+	runtimes: PythonRuntime[]
 	promptInsert: PromptInsert | null
 
 	init(): Promise<void>
@@ -76,7 +79,9 @@ interface Store {
 	toggleFavorite(path: string): void
 	setPreview(path: string | null): void
 	setTheme(theme: Theme): void
-	toggle(key: 'showExplorer' | 'showPreview' | 'showHidden' | 'paletteOpen' | 'settingsOpen'): void
+	toggle(key: 'showExplorer' | 'showPreview' | 'showHidden' | 'paletteOpen' | 'settingsOpen' | 'pythonOpen'): void
+	restartPanes(): Promise<void>
+	selectPython(path: string): Promise<void>
 }
 
 let counter = 0
@@ -183,13 +188,16 @@ export const useStore = create<Store>((set, get) => {
 		theme: storedTheme(),
 		paletteOpen: false,
 		settingsOpen: false,
+		pythonOpen: false,
+		python: null,
+		runtimes: [],
 		promptInsert: null,
 
 		async init() {
 			if (initialized) return
 			initialized = true
 			const app = await window.oshell.app.info()
-			set({ app, explorerRoot: app.home })
+			set({ app, explorerRoot: app.home, python: app.python, runtimes: app.runtimes })
 			window.oshell.pane.onEvent(handleEvent)
 			get().newTab(app.home)
 		},
@@ -345,6 +353,24 @@ export const useStore = create<Store>((set, get) => {
 				if (key === 'showExplorer') localStorage.setItem('oshell-show-explorer', next ? '1' : '0')
 				return { [key]: next } as Pick<Store, typeof key>
 			})
+		},
+
+		async restartPanes() {
+			const state = get()
+			const open = state.tabs.flatMap((tab) => paneIds(tab.layout).map((id) => ({ id, cwd: state.panes[id]?.cwd || state.app?.home || '' })))
+			await Promise.all(open.map((pane) => window.oshell.pane.close(pane.id)))
+			set((current) => {
+				const panes = { ...current.panes }
+				for (const pane of open) delete panes[pane.id]
+				return { panes }
+			})
+			for (const pane of open) openPane(pane.id, pane.cwd)
+		},
+
+		async selectPython(path) {
+			const next = await window.oshell.app.setPython(path)
+			set({ python: next.python, runtimes: next.runtimes, pythonOpen: false })
+			await get().restartPanes()
 		}
 	}
 })
