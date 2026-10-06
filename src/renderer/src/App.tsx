@@ -3,6 +3,7 @@ import { Allotment } from 'allotment'
 import { useStore } from './store'
 import { Explorer } from './components/Explorer'
 import { Palette } from './components/Palette'
+import { SettingsDialog } from './components/SettingsDialog'
 import { PreviewPanel } from './components/PreviewPanel'
 import { StatusBar } from './components/StatusBar'
 import { TabBar } from './components/TabBar'
@@ -14,6 +15,7 @@ export function App(): React.JSX.Element {
 	const showPreview = useStore((s) => s.showPreview)
 	const theme = useStore((s) => s.theme)
 	const mac = useStore((s) => s.app?.platform === 'darwin')
+	const settingsOpen = useStore((s) => s.settingsOpen)
 
 	useEffect(() => {
 		void useStore.getState().init()
@@ -38,6 +40,11 @@ export function App(): React.JSX.Element {
 			} else if (mod && event.key.toLowerCase() === 'd') {
 				event.preventDefault()
 				useStore.getState().split(event.shiftKey ? 'column' : 'row')
+			} else if (event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'l') {
+				event.preventDefault()
+				const state = useStore.getState()
+				const tab = state.tabs.find((item) => item.id === state.activeTabId)
+				if (tab) state.clear(tab.activePaneId)
 			}
 		}
 		window.addEventListener('keydown', onKey)
@@ -63,6 +70,7 @@ export function App(): React.JSX.Element {
 				</Allotment>
 			</div>
 			<StatusBar />
+			{settingsOpen && <SettingsDialog />}
 			<Palette />
 		</div>
 	)

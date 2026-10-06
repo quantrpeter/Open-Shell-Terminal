@@ -127,6 +127,9 @@ export function Prompt({ paneId }: { paneId: string }): React.JSX.Element {
 			step(1)
 		} else if (event.ctrlKey && event.key.toLowerCase() === 'c' && input.current?.selectionStart === input.current?.selectionEnd) {
 			for (const block of pane.blocks) if (block.status === 'running') useStore.getState().cancel(paneId, block.id)
+		} else if (event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'l') {
+			event.preventDefault()
+			useStore.getState().clear(paneId)
 		}
 	}
 

@@ -15,18 +15,18 @@ export function StatusBar(): React.JSX.Element {
 	)
 	const showExplorer = useStore((s) => s.showExplorer)
 	const hint = useStore((s) => s.app?.engineHint ?? '')
-	const { setTheme, toggle } = useStore.getState()
+	const state = (): ReturnType<typeof useStore.getState> => useStore.getState()
 
 	return (
 		<div className="statusbar">
 			<button
 				className={showExplorer ? 'status-btn active' : 'status-btn'}
-				onClick={() => toggle('showExplorer')}
+				onClick={() => state().toggle('showExplorer')}
 				title="Toggle explorer"
 			>
 				Explorer
 			</button>
-			<button className="status-btn" onClick={() => toggle('showPreview')} title="Toggle preview">
+			<button className="status-btn" onClick={() => state().toggle('showPreview')} title="Toggle preview">
 				Preview
 			</button>
 			<span className="status-cwd" title={cwd}>
@@ -34,7 +34,7 @@ export function StatusBar(): React.JSX.Element {
 			</span>
 			{hint && <span className="status-warn">{hint}</span>}
 			{running > 0 && <span className="status-running">{running} running</span>}
-			<button className="status-btn" onClick={() => setTheme(NEXT[theme])} title="Theme">
+			<button className="status-btn" onClick={() => state().setTheme(NEXT[theme])} title="Theme">
 				Theme: {theme}
 			</button>
 			<span className="muted">

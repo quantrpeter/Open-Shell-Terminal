@@ -5,6 +5,7 @@ import type {
 	EngineInfo,
 	RunStreamEvent,
 	RunSummary,
+	Setting,
 	ShellErrorRecord
 } from '../shared/types'
 import type { EngineCommand } from './paths'
@@ -25,6 +26,7 @@ export interface EngineOptions {
 	command: EngineCommand
 	cwd: string
 	platform?: NodeJS.Platform
+	env?: NodeJS.ProcessEnv
 }
 
 function fail(code: string, message: string): ShellErrorRecord {
@@ -75,6 +77,7 @@ export class EngineProcess {
 			windowsHide: true,
 			detached: this.platform !== 'win32',
 			env: {
+				...this.options.env,
 				...process.env,
 				PWD: this.lastCwd,
 				PYTHONUTF8: '1',
@@ -215,6 +218,21 @@ export class EngineProcess {
 	async history(): Promise<string[]> {
 		const result = await this.request<{ history: string[] }>('history', {})
 		return result.history
+	}
+
+	async settings(): Promise<Setting[]> {
+		const result = await this.request<{ settings: Setting[] }>('settings', { action: 'list' })
+		return result.settings
+	}
+
+	async setSetting(name: string, value: string): Promise<Setting[]> {
+		const result = await this.request<{ settings: Setting[] }>('settings', { action: 'set', name, value })
+		return result.settings
+	}
+
+	async deleteSetting(name: string): Promise<Setting[]> {
+		const result = await this.request<{ settings: Setting[] }>('settings', { action: 'delete', name })
+		return result.settings
 	}
 
 	dispose(): void {

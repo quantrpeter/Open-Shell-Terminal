@@ -50,6 +50,11 @@ export interface CompleteResult {
 	items: string[]
 }
 
+export interface Setting {
+	name: string
+	value: unknown
+}
+
 export interface DirEntry {
 	name: string
 	path: string
@@ -75,7 +80,10 @@ export interface AppInfo {
 export interface OshellApi {
 	app: { info(): Promise<AppInfo> }
 	pane: {
-		open(paneId: string, cwd?: string): Promise<EngineInfo>
+		open(paneId: string, cwd?: string): Promis
+		settings(paneId: string): Promise<Setting[]>
+		setSetting(paneId: string, name: string, value: string): Promise<Setting[]>
+		deleteSetting(paneId: string, name: string): Promise<Setting[]>e<EngineInfo>
 		close(paneId: string): Promise<void>
 		run(paneId: string, runId: string, line: string): Promise<void>
 		cancel(paneId: string, runId: string): Promise<void>

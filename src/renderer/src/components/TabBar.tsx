@@ -6,7 +6,7 @@ export function TabBar(): React.JSX.Element {
 	const panes = useStore((s) => s.panes)
 	const activeId = useStore((s) => s.activeTabId)
 	const mac = useStore((s) => s.app?.platform === 'darwin')
-	const { selectTab, closeTab, newTab, split, toggle } = useStore.getState()
+	const state = (): ReturnType<typeof useStore.getState> => useStore.getState()
 
 	return (
 		<div className={mac ? 'tabbar mac' : 'tabbar'}>
@@ -20,7 +20,7 @@ export function TabBar(): React.JSX.Element {
 							role="tab"
 							aria-selected={tab.id === activeId}
 							className={tab.id === activeId ? 'tab active' : 'tab'}
-							onClick={() => selectTab(tab.id)}
+							onClick={() => state().selectTab(tab.id)}
 							title={cwd}
 						>
 							<span className="tab-title">{title}</span>
@@ -29,7 +29,7 @@ export function TabBar(): React.JSX.Element {
 								title="Close tab"
 								onClick={(event) => {
 									event.stopPropagation()
-									closeTab(tab.id)
+									state().closeTab(tab.id)
 								}}
 							>
 								&times;
@@ -37,18 +37,18 @@ export function TabBar(): React.JSX.Element {
 						</div>
 					)
 				})}
-				<button className="icon-btn" title="New tab" onClick={() => newTab()}>
+				<button className="icon-btn" title="New tab" onClick={() => state().newTab()}>
 					+
 				</button>
 			</div>
 			<div className="tabbar-actions">
-				<button className="icon-btn" title="Split right" onClick={() => split('row')}>
+				<button className="icon-btn" title="Split right" onClick={() => state().split('row')}>
 					&#9707;
 				</button>
-				<button className="icon-btn" title="Split down" onClick={() => split('column')}>
+				<button className="icon-btn" title="Split down" onClick={() => state().split('column')}>
 					&#9708;
 				</button>
-				<button className="icon-btn" title="Command palette" onClick={() => toggle('paletteOpen')}>
+				<button className="icon-btn" title="Command palette" onClick={() => state().toggle('paletteOpen')}>
 					&#8984;
 				</button>
 			</div>

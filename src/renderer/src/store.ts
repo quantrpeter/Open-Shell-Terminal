@@ -55,6 +55,7 @@ interface Store {
 	previewPath: string | null
 	theme: Theme
 	paletteOpen: boolean
+	settingsOpen: boolean
 	promptInsert: PromptInsert | null
 
 	init(): Promise<void>
@@ -75,7 +76,7 @@ interface Store {
 	toggleFavorite(path: string): void
 	setPreview(path: string | null): void
 	setTheme(theme: Theme): void
-	toggle(key: 'showExplorer' | 'showPreview' | 'showHidden' | 'paletteOpen'): void
+	toggle(key: 'showExplorer' | 'showPreview' | 'showHidden' | 'paletteOpen' | 'settingsOpen'): void
 }
 
 let counter = 0
@@ -181,6 +182,7 @@ export const useStore = create<Store>((set, get) => {
 		previewPath: null,
 		theme: storedTheme(),
 		paletteOpen: false,
+		settingsOpen: false,
 		promptInsert: null,
 
 		async init() {

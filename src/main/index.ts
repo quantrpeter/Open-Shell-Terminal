@@ -59,7 +59,8 @@ function registerIpc(): void {
 		engines.get(id)?.dispose()
 		const engine = new EngineProcess({
 			command: engineCommand,
-			cwd: typeof cwd === 'string' && cwd ? cwd : homedir()
+			cwd: typeof cwd === 'string' && cwd ? cwd : homedir(),
+			env: process.env.OSHELL_ENV ? { OSHELL_ENV: process.env.OSHELL_ENV } : undefined
 		})
 		engines.set(id, engine)
 		return engine.info().catch((error) => {
@@ -102,6 +103,39 @@ function registerIpc(): void {
 	ipcMain.handle('pane:history', (_event, paneId: unknown) =>
 		engineFor(str(paneId, 'paneId'))
 			.history()
+			.catch((error) => {
+				throw readable(error)
+			})
+	)
+
+	// Settings live in ~/.openshell. Every pane has its own copy, so a write
+	// is applied to each live engine; the file write is the same either way.
+	const reloadSettings = async (writer: (engine: EngineProcess) => Promise<unknown>): Promise<unknown> => {
+		const live = [...engines.values()]
+		if (live.length === 0) throw new Error('no engine is running')
+		const [first, ...rest] = live
+		const result = await writer(first)
+		await Promise.all(rest.map((engine) => engine.settings().catch(() => undefined)))
+		return result
+	}
+
+	ipcMain.handle('pane:settings', (_event, paneId: unknown) =>
+		engineFor(str(paneId, 'paneId'))
+			.settings()
+			.catch((error) => {
+				throw readable(error)
+			})
+	)
+
+	ipcMain.handle('pane:settings:set', (_event, paneId: unknown, name: unknown, value: unknown) =>
+		reloadSettings((engine) => engine.setSetting(str(name, 'name'), typeof value === 'string' ? value : ''))
+			.catch((error) => {
+				throw readable(error)
+			})
+	)
+
+	ipcMain.handle('pane:settings:delete', (_event, paneId: unknown, name: unknown) =>
+		reloadSettings((engine) => engine.deleteSetting(str(name, 'name')))
 			.catch((error) => {
 				throw readable(error)
 			})

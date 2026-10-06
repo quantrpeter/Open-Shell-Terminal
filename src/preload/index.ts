@@ -10,6 +10,9 @@ const api: OshellApi = {
 		cancel: (paneId, runId) => ipcRenderer.invoke('pane:cancel', paneId, runId),
 		complete: (paneId, line, cursor) => ipcRenderer.invoke('pane:complete', paneId, line, cursor),
 		history: (paneId) => ipcRenderer.invoke('pane:history', paneId),
+		settings: (paneId) => ipcRenderer.invoke('pane:settings', paneId),
+		setSetting: (paneId, name, value) => ipcRenderer.invoke('pane:settings:set', paneId, name, value),
+		deleteSetting: (paneId, name) => ipcRenderer.invoke('pane:settings:delete', paneId, name),
 		onEvent: (listener) => {
 			const handler = (_event: IpcRendererEvent, payload: PaneEvent): void => listener(payload)
 			ipcRenderer.on('pane:event', handler)

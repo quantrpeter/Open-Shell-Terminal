@@ -699,3 +699,104 @@ table.records tr.table-row:hover td {
 	min-width: 110px;
 	font-family: var(--mono);
 }
+
+/* Environment settings dialog */
+.settings-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.3);
+	z-index: 220;
+}
+.settings-dialog {
+	position: fixed;
+	top: 12%;
+	left: 50%;
+	transform: translateX(-50%);
+	width: min(640px, 92vw);
+	max-height: 76vh;
+	display: flex;
+	flex-direction: column;
+	z-index: 221;
+	background: var(--bg);
+	border: 1px solid var(--border);
+	color: var(--text);
+}
+.settings-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--border);
+	font-size: 13px;
+}
+.settings-search,
+.settings-edit input,
+.settings-add input {
+	background: none;
+	border: none;
+	border-bottom: 1px solid var(--border);
+	outline: none;
+	color: var(--text);
+	font: inherit;
+	font-size: 13px;
+	padding: 8px 12px;
+}
+.settings-search {
+	width: 100%;
+}
+.settings-list {
+	overflow-y: auto;
+	min-height: 80px;
+	max-height: 46vh;
+}
+.settings-row,
+.settings-edit,
+.settings-add {
+	display: grid;
+	grid-template-columns: minmax(120px, 1fr) minmax(140px, 2fr) auto auto;
+	gap: 8px;
+	align-items: center;
+	padding: 4px 12px;
+}
+.settings-edit,
+.settings-add {
+	border-top: 1px solid var(--border);
+	padding: 8px 12px;
+}
+.settings-name {
+	font-family: var(--mono);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.settings-value {
+	color: var(--muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.settings-row button,
+.settings-edit button,
+.settings-add button {
+	background: none;
+	border: 1px solid var(--border);
+	color: var(--text);
+	font: inherit;
+	font-size: 12px;
+	padding: 3px 8px;
+	cursor: pointer;
+}
+.settings-row button:disabled,
+.settings-add button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+.settings-error {
+	padding: 6px 12px;
+	color: var(--error);
+	font-size: 12px;
+}
+.settings-foot {
+	padding: 6px 12px 10px;
+	font-size: 11px;
+}

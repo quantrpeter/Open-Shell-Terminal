@@ -20,7 +20,10 @@ test.beforeAll(async () => {
 	mkdirSync(join(sandbox, 'alpha'))
 	mkdirSync(join(sandbox, 'beta'))
 	writeFileSync(join(sandbox, 'note.txt'), 'hello preview')
-	app = await electron.launch({ args: ['.'] })
+	app = await electron.launch({
+		args: ['.'],
+		env: { ...process.env, OSHELL_ENV: join(sandbox, 'settings.json') }
+	})
 	page = await app.firstWindow()
 	await expect(page.locator('.prompt-input')).toBeEnabled({ timeout: 20_000 })
 })
@@ -114,6 +117,36 @@ test('external programs run and can be cancelled', async () => {
 	// The engine is usable again after the kill.
 	await runLine('pwd')
 	await expect(page.locator('.block').last().locator('.status')).toContainText('done')
+})
+
+test('environment dialog searches, adds, edits and deletes a setting', async () => {
+	await page.getByTitle('Command palette').click()
+	await page.getByPlaceholder('Type a command or search').fill('environment')
+	await page.getByRole('option', { name: 'Environment variables' }).click()
+	const dialog = page.getByRole('dialog', { name: 'Environment variables' })
+	await expect(dialog).toBeVisible()
+	await dialog.getByLabel('New name').fill('e2e_host')
+	await dialog.getByLabel('New value').fill('localhost')
+	await dialog.getByRole('button', { name: 'Add' }).click()
+	await expect(dialog.locator('.settings-name', { hasText: 'e2e_host' })).toBeVisible()
+	await dialog.getByPlaceholder('Search name or value').fill('e2e_')
+	await expect(dialog.locator('.settings-row')).toHaveCount(1)
+	await dialog.getByRole('button', { name: 'Edit' }).click()
+	await dialog.getByLabel('Edit value').fill('remote')
+	await dialog.getByRole('button', { name: 'Save' }).click()
+	await expect(dialog.locator('.settings-value')).toHaveText('remote')
+	await dialog.getByRole('button', { name: 'Delete' }).click()
+	await expect(dialog.locator('.settings-row')).toHaveCount(0)
+	await page.keyboard.press('Escape')
+	await expect(dialog).toHaveCount(0)
+})
+
+test('Ctrl+L clears the screen', async () => {
+	await expect(page.locator('.block').first()).toBeVisible()
+	await page.locator('.prompt-input').press('Control+l')
+	await expect(page.locator('.block')).toHaveCount(0)
+	await runLine('pwd')
+	await expect(page.locator('.block')).toHaveCount(1)
 })
 
 test('split panes and the command palette', async () => {
