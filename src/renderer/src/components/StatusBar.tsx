@@ -13,12 +13,17 @@ export function StatusBar(): React.JSX.Element {
 	const running = useStore((s) =>
 		Object.values(s.panes).reduce((sum, pane) => sum + pane.blocks.filter((b) => b.status === 'running').length, 0)
 	)
+	const showExplorer = useStore((s) => s.showExplorer)
 	const hint = useStore((s) => s.app?.engineHint ?? '')
 	const { setTheme, toggle } = useStore.getState()
 
 	return (
 		<div className="statusbar">
-			<button className="status-btn" onClick={() => toggle('showExplorer')} title="Toggle explorer">
+			<button
+				className={showExplorer ? 'status-btn active' : 'status-btn'}
+				onClick={() => toggle('showExplorer')}
+				title="Toggle explorer"
+			>
 				Explorer
 			</button>
 			<button className="status-btn" onClick={() => toggle('showPreview')} title="Toggle preview">

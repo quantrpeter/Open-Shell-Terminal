@@ -52,8 +52,8 @@ function PaneView({ paneId }: { paneId: string }): React.JSX.Element {
 						<pre className="raw">{pane.error}</pre>
 					</div>
 				) : pane.blocks.length === 0 ? (
-					<div className="welcome muted">
-						{pane.ready ? 'Open Shell. Type a command, press Tab to complete, or click a folder to cd.' : 'Starting engine\u2026'}
+					<div className="welcome muted" style={{display: pane.ready ? 'none' : 'block'}}>
+						Starting engine\u2026
 					</div>
 				) : null}
 				{pane.blocks.map((block) => (

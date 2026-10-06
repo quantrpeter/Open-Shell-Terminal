@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { DirEntry } from '../../../shared/types'
-import { breadcrumbs, chain, dirname, isUnder, samePath } from '../../../shared/paths'
+import { basename, breadcrumbs, chain, dirname, isUnder, samePath } from '../../../shared/paths'
 import { shellQuote } from '../../../shared/quote'
 import { useStore } from '../store'
 
@@ -27,10 +27,11 @@ function useActiveCwd(): string {
 
 export function Explorer(): React.JSX.Element {
 	const root = useStore((s) => s.explorerRoot)
+	const favorites = useStore((s) => s.favorites)
 	const showHidden = useStore((s) => s.showHidden)
 	const windows = useStore((s) => s.app?.platform === 'win32')
 	const home = useStore((s) => s.app?.home ?? '')
-	const { setExplorerRoot, cd, setPreview, toggle, newTab, split, insertIntoPrompt } = useStore.getState()
+	const { setExplorerRoot, toggleFavorite, cd, setPreview, toggle, newTab, split, insertIntoPrompt } = useStore.getState()
 	const cwd = useActiveCwd()
 
 	const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -169,8 +170,11 @@ export function Explorer(): React.JSX.Element {
 			{ label: 'Copy path', run: () => copyPath(row.path) },
 			{ label: 'Reveal in file manager', run: () => void window.oshell.fs.reveal(row.path) }
 		]
-		if (row.isDir) items.push({ label: 'Set as root', run: () => setExplorerRoot(row.path) })
-		else items.push({ label: 'Open with default app', run: () => void window.oshell.fs.open(row.path) })
+		if (row.isDir) {
+			const pinned = favorites.some((item) => samePath(item, row.path))
+			items.push({ label: pinned ? 'Remove from favorites' : 'Add to favorites', run: () => toggleFavorite(row.path) })
+			items.push({ label: 'Set as root', run: () => setExplorerRoot(row.path) })
+		} else items.push({ label: 'Open with default app', run: () => void window.oshell.fs.open(row.path) })
 		return items
 	}
 
@@ -220,6 +224,44 @@ export function Explorer(): React.JSX.Element {
 					</span>
 				))}
 			</div>
+			{favorites.length > 0 && (
+				<div className="favorites">
+					{favorites.map((path) => (
+						<div
+							key={path}
+							className={samePath(path, cwd) ? 'fav-row current' : 'fav-row'}
+							title={path}
+							onClick={() => {
+								setExplorerRoot(path)
+								if (!samePath(path, cwd)) cd(path)
+							}}
+							onContextMenu={(event) => {
+								event.preventDefault()
+								setMenu({
+									x: event.clientX,
+									y: event.clientY,
+									row: { path, name: basename(path), depth: 0, isDir: true, expanded: false }
+								})
+							}}
+						>
+							<span className="fav-pin" aria-hidden="true">
+								&#9733;
+							</span>
+							<span className="tree-name">{basename(path)}</span>
+							<button
+								className="icon-btn fav-remove"
+								title="Remove from favorites"
+								onClick={(event) => {
+									event.stopPropagation()
+									toggleFavorite(path)
+								}}
+							>
+								&#215;
+							</button>
+						</div>
+					))}
+				</div>
+			)}
 			<div className="tree" ref={scroller}>
 				<div className="tree-inner" style={{ height: virtualizer.getTotalSize() }}>
 					{virtualizer.getVirtualItems().map((item) => {

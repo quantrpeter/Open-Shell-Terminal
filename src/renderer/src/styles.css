@@ -87,6 +87,11 @@ pre {
 	min-height: 0;
 	position: relative;
 }
+/* Allotment sizes its children by height, so panes must fill it. */
+.main > .split-view,
+.main .split-view-view {
+	height: 100%;
+}
 .tab-content {
 	height: 100%;
 }
@@ -224,6 +229,39 @@ pre {
 .crumb-sep {
 	color: var(--muted);
 	opacity: 0.5;
+}
+.favorites {
+	border-bottom: 1px solid var(--border);
+	padding: 2px 0 4px;
+}
+.fav-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 24px;
+	padding: 0 8px 0 10px;
+	cursor: default;
+	user-select: none;
+}
+.fav-row:hover {
+	background: var(--hover);
+}
+.fav-row.current {
+	background: var(--accent-bg);
+	color: var(--accent);
+}
+.fav-pin {
+	color: var(--accent);
+	font-size: 11px;
+	width: 14px;
+	text-align: center;
+}
+.fav-remove {
+	margin-left: auto;
+	opacity: 0;
+}
+.fav-row:hover .fav-remove {
+	opacity: 1;
 }
 .tree {
 	flex: 1;
@@ -529,7 +567,7 @@ table.records tr.table-row:hover td {
 }
 .prompt-input::placeholder {
 	color: var(--muted);
-	opacity: 0.6;
+	opacity: 0.3;
 }
 .popup {
 	position: absolute;
@@ -567,6 +605,8 @@ table.records tr.table-row:hover td {
 	background: var(--panel);
 	border-top: 1px solid var(--border);
 	font-size: 11px;
+	position: relative;
+	z-index: 5;
 }
 .status-cwd {
 	flex: 1;
@@ -586,6 +626,9 @@ table.records tr.table-row:hover td {
 }
 .status-btn:hover {
 	color: var(--text);
+}
+.status-btn.active {
+	color: var(--accent);
 }
 .status-running {
 	color: var(--warn);

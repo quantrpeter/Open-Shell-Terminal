@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { AppInfo, CommandInfo, EngineInfo, PaneEvent, RunSummary, ShellErrorRecord } from '../../shared/types'
-import { isUnder } from '../../shared/paths'
+import { isUnder, samePath } from '../../shared/paths'
 import { shellQuote } from '../../shared/quote'
 import { paneIds, removePane, splitPane, type Direction, type LayoutNode } from './lib/layout'
 
@@ -48,6 +48,7 @@ interface Store {
 	activeTabId: string
 	panes: Record<string, Pane>
 	explorerRoot: string
+	favorites: string[]
 	showExplorer: boolean
 	showPreview: boolean
 	showHidden: boolean
@@ -71,6 +72,7 @@ interface Store {
 	removeBlock(paneId: string, blockId: string): void
 	insertIntoPrompt(text: string): void
 	setExplorerRoot(path: string): void
+	toggleFavorite(path: string): void
 	setPreview(path: string | null): void
 	setTheme(theme: Theme): void
 	toggle(key: 'showExplorer' | 'showPreview' | 'showHidden' | 'paletteOpen'): void
@@ -83,6 +85,20 @@ export const uid = (prefix: string): string => `${prefix}${Date.now().toString(3
 const storedTheme = (): Theme => {
 	const value = localStorage.getItem('oshell-theme')
 	return value === 'light' || value === 'dark' ? value : 'system'
+}
+
+const storedFlag = (key: string, fallback: boolean): boolean => {
+	const value = localStorage.getItem(key)
+	return value === null ? fallback : value === '1'
+}
+
+const storedList = (key: string): string[] => {
+	try {
+		const value = JSON.parse(localStorage.getItem(key) ?? '[]')
+		return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+	} catch {
+		return []
+	}
 }
 
 export const useStore = create<Store>((set, get) => {
@@ -158,7 +174,8 @@ export const useStore = create<Store>((set, get) => {
 		activeTabId: '',
 		panes: {},
 		explorerRoot: '',
-		showExplorer: true,
+		favorites: storedList('oshell-favorites'),
+		showExplorer: storedFlag('oshell-show-explorer', false),
 		showPreview: false,
 		showHidden: false,
 		previewPath: null,
@@ -275,6 +292,8 @@ export const useStore = create<Store>((set, get) => {
 
 		cd(path) {
 			const windows = get().app?.platform === 'win32'
+			// A cd outside the tree re-roots it, so the explorer follows the shell.
+			if (!isUnder(get().explorerRoot, path)) set({ explorerRoot: path })
 			get().runInActive(`cd ${shellQuote(path, windows)}`)
 		},
 
@@ -308,8 +327,22 @@ export const useStore = create<Store>((set, get) => {
 			set({ theme })
 		},
 
+		toggleFavorite(path) {
+			set((state) => {
+				const favorites = state.favorites.some((item) => samePath(item, path))
+					? state.favorites.filter((item) => !samePath(item, path))
+					: [...state.favorites, path]
+				localStorage.setItem('oshell-favorites', JSON.stringify(favorites))
+				return { favorites }
+			})
+		},
+
 		toggle(key) {
-			set((state) => ({ [key]: !state[key] }) as Pick<Store, typeof key>)
+			set((state) => {
+				const next = !state[key]
+				if (key === 'showExplorer') localStorage.setItem('oshell-show-explorer', next ? '1' : '0')
+				return { [key]: next } as Pick<Store, typeof key>
+			})
 		}
 	}
 })

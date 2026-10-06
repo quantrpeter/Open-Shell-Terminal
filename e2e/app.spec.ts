@@ -63,6 +63,11 @@ test('the prompt follows the last block instead of sticking to the bottom', asyn
 })
 
 test('explorer follows the cwd and clicking a folder cds into it', async () => {
+	// Hidden by default. The status bar, shortcut, and palette all drive the same toggle.
+	await page.getByTitle('Command palette').click()
+	await page.getByPlaceholder('Type a command or search').fill('Toggle explorer')
+	await page.getByRole('option', { name: 'Toggle explorer' }).click()
+	await expect(page.locator('.explorer')).toBeVisible()
 	const row = page.locator('.tree-row', { hasText: 'alpha' })
 	await expect(row).toBeVisible()
 	await row.click()
@@ -71,8 +76,23 @@ test('explorer follows the cwd and clicking a folder cds into it', async () => {
 	await runLine('pwd')
 	await expect(page.locator('.table-row', { hasText: join(sandbox, 'alpha') }).last()).toBeVisible()
 })
+test('a favorite folder pins above the tree and opens on click', async () => {
+	await page.locator('.tree-row', { hasText: 'beta' }).click({ button: 'right' })
+	await page.getByRole('button', { name: 'Add to favorites' }).click()
+	const pin = page.locator('.fav-row', { hasText: 'beta' })
+	await expect(pin).toBeVisible()
+	const pinBox = await pin.boundingBox()
+	const treeBox = await page.locator('.tree').boundingBox()
+	expect(pinBox!.y + pinBox!.height).toBeLessThanOrEqual(treeBox!.y)
+	await page.locator('.tree-row', { hasText: 'alpha' }).click()
+	await pin.click()
+	await expect(page.locator('.prompt-cwd')).toContainText('beta')
+	await pin.getByTitle('Remove from favorites').click()
+	await expect(page.locator('.fav-row')).toHaveCount(0)
+})
 
 test('clicking a file previews it', async () => {
+	await page.getByTitle('Parent folder as root').click()
 	await page.locator('.tree-row', { hasText: 'note.txt' }).click()
 	await expect(page.locator('.preview-text')).toContainText('hello preview')
 })
@@ -86,7 +106,7 @@ test('Tab completes a command name', async () => {
 })
 
 test('external programs run and can be cancelled', async () => {
-	await runLine(`"${process.execPath}" -e "console.log('started');setTimeout(()=>{},60000)"`)
+	await runLine(`ext "${process.execPath}" -e "console.log('started');setTimeout(()=>{},60000)"`)
 	const block = page.locator('.block').last()
 	await expect(block).toContainText('started')
 	await block.getByRole('button', { name: 'Cancel' }).click()
