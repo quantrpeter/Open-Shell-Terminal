@@ -1,11 +1,11 @@
-import { app, BrowserWindow, dialog, ipcMain, shell, session, type WebContents } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, protocol, shell, session, type WebContents } from 'electron'
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs'
+import { createReadStream, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { delimiter, join, sep } from 'node:path'
 import type { AppInfo, PaneEvent, PythonRuntime } from '../shared/types'
 import { EngineProcess } from './engine'
-import { DirWatcher, listDir, readPreview } from './fs'
+import { DirWatcher, listDir, mediaType, readPreview } from './fs'
 import {
 	describePython,
 	engineProblem,
@@ -248,7 +248,67 @@ function registerIpc(): void {
 	})
 	ipcMain.handle('fs:reveal', (_event, path: unknown) => shell.showItemInFolder(str(path, 'path')))
 	ipcMain.handle('fs:open', (_event, path: unknown) => shell.openPath(str(path, 'path')))
-	ipcMain.handle('fs:preview', (_event, path: unknown) => readPreview(str(path, 'path')))
+	ipcMain.handle('fs:preview', (_event, path: unknown) =>
+		readPreview(str(path, 'path'), (file) => `oshell-file://local/${encodeURIComponent(file)}`)
+	)
+}
+
+protocol.registerSchemesAsPrivileged([
+	{
+		scheme: 'oshell-file',
+		privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, bypassCSP: true }
+	}
+])
+
+function registerFileProtocol(): void {
+	protocol.handle('oshell-file', (request) => {
+		let path = ''
+		try {
+			path = decodeURIComponent(new URL(request.url).pathname.replace(/^\/+/, ''))
+		} catch {
+			return new Response('bad path', { status: 400 })
+		}
+		const type = mediaType(path)
+		if (!type) return new Response('not previewable', { status: 403 })
+		return fileResponse(path, type, request.headers.get('range'))
+	})
+}
+
+function fileResponse(path: string, type: string, range: string | null): Response {
+	let size = 0
+	try {
+		size = statSync(path).size
+	} catch {
+		return new Response('not found', { status: 404 })
+	}
+	const headers = { 'content-type': type, 'accept-ranges': 'bytes', 'content-length': String(size) }
+	const match = range?.match(/^bytes=(\d*)-(\d*)$/)
+	if (!match) return new Response(streamBody(path), { headers })
+	const start = match[1] ? Number(match[1]) : 0
+	const end = match[2] ? Number(match[2]) : size - 1
+	if (start > end || end >= size) return new Response('bad range', { status: 416, headers: { 'content-range': `bytes */${size}` } })
+	return new Response(streamBody(path, start, end), {
+		status: 206,
+		headers: {
+			...headers,
+			'content-length': String(end - start + 1),
+			'content-range': `bytes ${start}-${end}/${size}`
+		}
+	})
+}
+
+function streamBody(path: string, start?: number, end?: number): ReadableStream<Uint8Array> {
+	const file = createReadStream(path, start === undefined ? undefined : { start, end })
+	return new ReadableStream({
+		start(controller) {
+			file.on('data', (chunk: Buffer | string) => controller.enqueue(typeof chunk === 'string' ? Buffer.from(chunk) : chunk))
+			file.on('end', () => controller.close())
+			file.on('error', (error) => controller.error(error))
+		},
+		cancel() {
+			file.destroy()
+		}
+	})
 }
 
 function hardenSession(): void {
@@ -258,7 +318,7 @@ function hardenSession(): void {
 			responseHeaders: {
 				...details.responseHeaders,
 				'Content-Security-Policy': [
-					"default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+					"default-src 'self'; img-src 'self' data:; media-src 'self' oshell-file:; frame-src 'self' oshell-file:; style-src 'self' 'unsafe-inline'; script-src 'self'"
 				]
 			}
 		})
@@ -304,6 +364,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
 	applyPythonChoice()
 	hardenSession()
+	registerFileProtocol()
 	registerIpc()
 	createWindow()
 	app.on('activate', () => {

@@ -314,7 +314,7 @@ pre {
 	right: 0;
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 6px;
 	white-space: nowrap;
 	cursor: default;
 	user-select: none;
@@ -340,10 +340,51 @@ pre {
 .file-icon {
 	display: inline-flex;
 	flex: none;
+	width: 16px;
+	justify-content: center;
 	color: var(--muted);
 }
 .file-icon.dir {
 	color: var(--accent);
+}
+.file-icon.kind-excel,
+.file-icon.kind-word,
+.file-icon.kind-powerpoint,
+.file-icon.kind-pdf {
+	color: inherit;
+}
+.file-icon.kind-image {
+	color: #c47ad4;
+}
+.file-icon.kind-video {
+	color: #d16b8a;
+}
+.file-icon.kind-audio {
+	color: #c48a3a;
+}
+.file-icon.kind-code {
+	color: #5b8def;
+}
+.file-icon.kind-archive,
+.file-icon.kind-disk {
+	color: #c9a227;
+}
+.file-icon.kind-text {
+	color: #7d8796;
+}
+.file-icon.kind-data {
+	color: #3aa6a0;
+}
+.file-icon.kind-config {
+	color: #8a93a2;
+}
+.file-icon.kind-font {
+	color: #6b7fd7;
+}
+.type-mark {
+	width: 14px;
+	height: 14px;
+	display: block;
 }
 .tree-name {
 	overflow: hidden;
@@ -391,14 +432,86 @@ pre {
 	overflow: auto;
 	min-height: 0;
 }
+.preview-body.fill {
+	display: flex;
+	overflow: hidden;
+}
 .preview-text {
 	padding: 10px 12px;
 	font-size: 12px;
+	white-space: pre-wrap;
 }
 .preview-image {
 	display: block;
 	max-width: 100%;
 	margin: 10px auto;
+}
+.preview-media {
+	display: block;
+	width: 100%;
+	max-height: 100%;
+	margin: auto;
+	background: #000;
+}
+.preview-frame {
+	flex: 1;
+	width: 100%;
+	height: 100%;
+	border: none;
+	background: #fff;
+}
+.sheet-view {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+}
+.sheet-scroll {
+	flex: 1;
+	overflow: auto;
+	min-height: 0;
+}
+table.sheet {
+	border-collapse: collapse;
+	font-size: 12px;
+}
+table.sheet th,
+table.sheet td {
+	border: 1px solid var(--border);
+	padding: 2px 8px;
+	white-space: nowrap;
+	max-width: 240px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+table.sheet th {
+	position: sticky;
+	left: 0;
+	background: var(--panel);
+	color: var(--muted);
+	text-align: right;
+	font-weight: 500;
+}
+.sheet-tabs {
+	display: flex;
+	gap: 2px;
+	overflow: auto;
+	border-top: 1px solid var(--border);
+	padding: 4px;
+	flex: none;
+}
+.sheet-tab {
+	border: none;
+	background: none;
+	color: var(--muted);
+	padding: 3px 8px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+.sheet-tab.active {
+	color: var(--text);
+	background: var(--hover);
 }
 
 /* Panes: the prompt lives at the end of the output, not in a fixed bar */

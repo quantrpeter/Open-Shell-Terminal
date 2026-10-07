@@ -15,11 +15,12 @@ interface Props {
 	version: number
 	filter: string
 	onCd(path: string): void
+	onOpen(path: string): void
 }
 
 // Plain table that shows every row. Sorting and filtering run in the renderer
 // over the rows received so far.
-export function RecordTable({ rows, version, filter, onCd }: Props): React.JSX.Element {
+export function RecordTable({ rows, version, filter, onCd, onOpen }: Props): React.JSX.Element {
 	const [sort, setSort] = useState<Sort | null>(null)
 	const [limit, setLimit] = useState(ROW_CAP)
 	const settled = useDeferredValue(version)
@@ -74,13 +75,14 @@ export function RecordTable({ rows, version, filter, onCd }: Props): React.JSX.E
 				</thead>
 				<tbody>
 					{shown.map((row, index) => {
-						const dirPath = row.is_dir === true && typeof row.fullpath === 'string' ? row.fullpath : null
+						const filePath = typeof row.fullpath === 'string' ? row.fullpath : null
+						const dirPath = row.is_dir === true ? filePath : null
 						return (
 							<tr key={index} className="table-row">
 								{columns.map((column) => {
 									const raw = row[column]
 									const text = formatCell(column, raw)
-									const link = column === 'name' && dirPath !== null
+									const link = column === 'name' && filePath !== null
 									const classes: string[] = []
 									if (numeric.has(column)) classes.push('num')
 									if (raw === null || raw === undefined) classes.push('null')
@@ -90,8 +92,8 @@ export function RecordTable({ rows, version, filter, onCd }: Props): React.JSX.E
 										<td
 											key={column}
 											className={classes.join(' ')}
-											title={link ? `cd ${dirPath}` : undefined}
-											onClick={link ? () => onCd(dirPath) : undefined}
+											title={link ? (dirPath ? `cd ${dirPath}` : filePath) : undefined}
+											onClick={link ? () => (dirPath ? onCd(dirPath) : onOpen(filePath)) : undefined}
 										>
 											{text}
 										</td>

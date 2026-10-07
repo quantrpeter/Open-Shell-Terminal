@@ -62,9 +62,17 @@ export interface DirEntry {
 	hidden: boolean
 }
 
+export interface SheetPreview {
+	name: string
+	rows: string[][]
+	truncated: boolean
+}
+
 export type Preview =
 	| { kind: 'text'; name: string; size: number; text: string; truncated: boolean; ext: string }
 	| { kind: 'image'; name: string; size: number; dataUrl: string }
+	| { kind: 'media'; name: string; size: number; url: string; media: 'video' | 'pdf' }
+	| { kind: 'sheet'; name: string; size: number; sheets: SheetPreview[] }
 	| { kind: 'binary'; name: string; size: number }
 	| { kind: 'too-large'; name: string; size: number }
 	| { kind: 'dir'; name: string }

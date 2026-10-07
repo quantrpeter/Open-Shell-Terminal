@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Preview } from '../../../shared/types'
+import type { Preview, SheetPreview } from '../../../shared/types'
 import { useStore } from '../store'
 import { Icon } from './Icon'
 
@@ -29,7 +29,7 @@ export function PreviewPanel(): React.JSX.Element {
 	}, [path])
 
 	const body = (): React.JSX.Element => {
-		if (!path) return <div className="muted pad">Click a file in the explorer to preview it.</div>
+		if (!path) return <div className="muted pad">Click a file to preview it.</div>
 		if (!preview) return <div className="muted pad">Loading&hellip;</div>
 		switch (preview.kind) {
 			case 'text':
@@ -41,6 +41,14 @@ export function PreviewPanel(): React.JSX.Element {
 				)
 			case 'image':
 				return <img className="preview-image" src={preview.dataUrl} alt={preview.name} />
+			case 'media':
+				return preview.media === 'video' ? (
+					<video className="preview-media" src={preview.url} controls />
+				) : (
+					<iframe className="preview-frame" src={preview.url} title={preview.name} />
+				)
+			case 'sheet':
+				return <SheetView sheets={preview.sheets} />
 			case 'binary':
 				return <div className="muted pad">Binary file ({preview.size} bytes)</div>
 			case 'too-large':
@@ -62,7 +70,42 @@ export function PreviewPanel(): React.JSX.Element {
 					<Icon name="close" />
 				</button>
 			</div>
-			<div className="preview-body">{body()}</div>
+			<div className={preview?.kind === 'media' || preview?.kind === 'sheet' ? 'preview-body fill' : 'preview-body'}>{body()}</div>
+		</div>
+	)
+}
+
+function SheetView({ sheets }: { sheets: SheetPreview[] }): React.JSX.Element {
+	const [active, setActive] = useState(0)
+	const sheet = sheets[active]
+	if (!sheet) return <div className="muted pad">Empty workbook</div>
+	const width = Math.max(1, ...sheet.rows.map((row) => row.length))
+	return (
+		<div className="sheet-view">
+			<div className="sheet-scroll">
+				<table className="sheet">
+					<tbody>
+						{sheet.rows.map((row, index) => (
+							<tr key={index}>
+								<th>{index + 1}</th>
+								{Array.from({ length: width }, (_, col) => (
+									<td key={col}>{row[col] ?? ''}</td>
+								))}
+							</tr>
+						))}
+					</tbody>
+				</table>
+				{sheet.truncated && <div className="muted pad">Showing the first 200 rows and 26 columns.</div>}
+			</div>
+			{sheets.length > 1 && (
+				<div className="sheet-tabs">
+					{sheets.map((item, index) => (
+						<button key={item.name} className={index === active ? 'sheet-tab active' : 'sheet-tab'} onClick={() => setActive(index)}>
+							{item.name}
+						</button>
+					))}
+				</div>
+			)}
 		</div>
 	)
 }

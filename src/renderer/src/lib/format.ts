@@ -52,12 +52,15 @@ export function compareValues(a: unknown, b: unknown): number {
 	return sa < sb ? -1 : sa > sb ? 1 : 0
 }
 
+// Kept on the record so a row can be opened, but not shown as a column.
+const HIDDEN_COLUMNS = new Set(['$t', 'fullpath'])
+
 export function columnsOf(rows: Row[]): string[] {
 	const seen = new Set<string>()
 	const columns: string[] = []
 	for (const row of rows) {
 		for (const key of Object.keys(row)) {
-			if (key !== '$t' && !seen.has(key)) {
+			if (!HIDDEN_COLUMNS.has(key) && !seen.has(key)) {
 				seen.add(key)
 				columns.push(key)
 			}

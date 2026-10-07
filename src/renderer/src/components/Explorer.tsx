@@ -4,6 +4,7 @@ import type { DirEntry } from '../../../shared/types'
 import { basename, breadcrumbs, chain, dirname, isUnder, samePath } from '../../../shared/paths'
 import { shellQuote } from '../../../shared/quote'
 import { useStore } from '../store'
+import { FileIcon } from './FileIcon'
 import { Icon } from './Icon'
 
 type Listing = { state: 'loading' } | { state: 'ready'; entries: DirEntry[] } | { state: 'error'; message: string }
@@ -295,9 +296,7 @@ export function Explorer(): React.JSX.Element {
 								>
 									{row.isDir && <Icon name={row.expanded ? 'expand_more' : 'chevron_right'} />}
 								</span>
-								<span className={row.isDir ? 'file-icon dir' : 'file-icon'}>
-									<Icon name={row.isDir ? 'folder' : 'draft'} />
-								</span>
+								<FileIcon name={row.name} isDir={row.isDir} />
 								<span className="tree-name">{row.depth === 0 ? row.name.split(/[\\/]/).filter(Boolean).pop() || row.name : row.name}</span>
 								{row.listing?.state === 'loading' && <span className="tree-note">&hellip;</span>}
 								{row.listing?.state === 'error' && (

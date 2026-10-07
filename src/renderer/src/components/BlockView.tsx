@@ -49,6 +49,7 @@ export function BlockView({ paneId, block }: { paneId: string; block: Block }): 
 						version={block.version}
 						filter={filter}
 						onCd={(path) => run(paneId, `cd ${shellQuote(path, windows)}`)}
+						onOpen={(path) => useStore.getState().setPreview(path)}
 					/>
 				)
 			case 'log': {
