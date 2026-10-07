@@ -700,7 +700,7 @@ table.records tr.table-row:hover td {
 	font-family: var(--mono);
 }
 
-/* Environment settings dialog */
+/* Settings dialog */
 .settings-overlay {
 	position: fixed;
 	inset: 0;
@@ -827,4 +827,47 @@ table.records tr.table-row:hover td {
 .python-row:disabled {
 	opacity: 0.6;
 	cursor: default;
+}
+
+.settings-tabs {
+	display: flex;
+	border-bottom: 1px solid var(--border);
+}
+.settings-tab {
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	color: var(--muted);
+	font: inherit;
+	font-size: 12px;
+	padding: 8px 14px;
+	cursor: pointer;
+}
+.settings-tab:hover {
+	color: var(--text);
+}
+.settings-tab.active {
+	color: var(--text);
+	border-bottom-color: var(--accent);
+}
+.settings-general {
+	padding: 6px 0;
+}
+.settings-field {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 14px;
+	font-size: 13px;
+}
+.settings-field select {
+	background: var(--bg);
+	color: var(--text);
+	border: 1px solid var(--border);
+	font: inherit;
+	font-size: 12px;
+	padding: 3px 6px;
+}
+.settings-actions {
+	display: flex;
 }

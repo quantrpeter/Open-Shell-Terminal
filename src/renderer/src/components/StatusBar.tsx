@@ -40,10 +40,13 @@ export function StatusBar(): React.JSX.Element {
 			</button>
 			<button
 				className="status-btn"
-				onClick={() => state().toggle('pythonOpen')}
+				onClick={() => state().openSettings('python')}
 				title={python?.path || 'Choose the Python that runs Open Shell'}
 			>
 				{python?.version ? `Python ${python.version}` : 'Python'}
+			</button>
+			<button className="status-btn" onClick={() => state().toggle('settingsOpen')} title="Settings (Ctrl/Cmd + .)">
+				Settings
 			</button>
 			<span className="muted">
 				{version ? `Open Shell ${version}` : ''} {platform}

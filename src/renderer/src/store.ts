@@ -6,6 +6,7 @@ import { paneIds, removePane, splitPane, type Direction, type LayoutNode } from 
 
 export type BlockStatus = 'running' | 'done' | 'failed' | 'cancelled'
 export type Theme = 'system' | 'light' | 'dark'
+export type SettingsTab = 'general' | 'python' | 'environment'
 
 export interface Block {
 	id: string
@@ -56,7 +57,7 @@ interface Store {
 	theme: Theme
 	paletteOpen: boolean
 	settingsOpen: boolean
-	pythonOpen: boolean
+	settingsTab: SettingsTab
 	python: PythonRuntime | null
 	runtimes: PythonRuntime[]
 	promptInsert: PromptInsert | null
@@ -79,7 +80,8 @@ interface Store {
 	toggleFavorite(path: string): void
 	setPreview(path: string | null): void
 	setTheme(theme: Theme): void
-	toggle(key: 'showExplorer' | 'showPreview' | 'showHidden' | 'paletteOpen' | 'settingsOpen' | 'pythonOpen'): void
+	toggle(key: 'showExplorer' | 'showPreview' | 'showHidden' | 'paletteOpen' | 'settingsOpen'): void
+	openSettings(tab?: SettingsTab): void
 	restartPanes(): Promise<void>
 	selectPython(path: string): Promise<void>
 }
@@ -188,7 +190,7 @@ export const useStore = create<Store>((set, get) => {
 		theme: storedTheme(),
 		paletteOpen: false,
 		settingsOpen: false,
-		pythonOpen: false,
+		settingsTab: 'general',
 		python: null,
 		runtimes: [],
 		promptInsert: null,
@@ -355,6 +357,10 @@ export const useStore = create<Store>((set, get) => {
 			})
 		},
 
+		openSettings(tab) {
+			set((state) => ({ settingsOpen: true, settingsTab: tab ?? state.settingsTab }))
+		},
+
 		async restartPanes() {
 			const state = get()
 			const open = state.tabs.flatMap((tab) => paneIds(tab.layout).map((id) => ({ id, cwd: state.panes[id]?.cwd || state.app?.home || '' })))
@@ -369,7 +375,7 @@ export const useStore = create<Store>((set, get) => {
 
 		async selectPython(path) {
 			const next = await window.oshell.app.setPython(path)
-			set({ python: next.python, runtimes: next.runtimes, pythonOpen: false })
+			set({ python: next.python, runtimes: next.runtimes })
 			await get().restartPanes()
 		}
 	}

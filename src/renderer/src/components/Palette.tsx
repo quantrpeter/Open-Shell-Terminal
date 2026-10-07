@@ -36,8 +36,9 @@ export function Palette(): React.JSX.Element {
 					<Command.Item onSelect={act(() => state().setTheme('dark'))}>Theme: dark</Command.Item>
 					<Command.Item onSelect={act(() => state().setTheme('system'))}>Theme: follow system</Command.Item>
 					<Command.Item onSelect={act(() => state().runInActive('clear'))}>Clear pane</Command.Item>
-					<Command.Item onSelect={act(() => state().toggle('settingsOpen'))}>Environment variables</Command.Item>
-					<Command.Item onSelect={act(() => state().toggle('pythonOpen'))}>Python runtime</Command.Item>
+					<Command.Item onSelect={act(() => state().openSettings())}>Settings</Command.Item>
+					<Command.Item onSelect={act(() => state().openSettings('environment'))}>Environment variables</Command.Item>
+					<Command.Item onSelect={act(() => state().openSettings('python'))}>Python runtime</Command.Item>
 					{app && <Command.Item onSelect={act(() => state().cd(app.home))}>Go to home folder</Command.Item>}
 				</Command.Group>
 				<Command.Group heading="Run a shell command">

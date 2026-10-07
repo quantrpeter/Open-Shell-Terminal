@@ -3,7 +3,6 @@ import { Allotment } from 'allotment'
 import { useStore } from './store'
 import { Explorer } from './components/Explorer'
 import { Palette } from './components/Palette'
-import { PythonDialog } from './components/PythonDialog'
 import { SettingsDialog } from './components/SettingsDialog'
 import { PreviewPanel } from './components/PreviewPanel'
 import { StatusBar } from './components/StatusBar'
@@ -17,7 +16,6 @@ export function App(): React.JSX.Element {
 	const theme = useStore((s) => s.theme)
 	const mac = useStore((s) => s.app?.platform === 'darwin')
 	const settingsOpen = useStore((s) => s.settingsOpen)
-	const pythonOpen = useStore((s) => s.pythonOpen)
 
 	useEffect(() => {
 		void useStore.getState().init()
@@ -30,7 +28,10 @@ export function App(): React.JSX.Element {
 	useEffect(() => {
 		const onKey = (event: KeyboardEvent): void => {
 			const mod = mac ? event.metaKey : event.ctrlKey
-			if (mod && event.shiftKey && event.key.toLowerCase() === 'p') {
+			if (mod && !event.shiftKey && !event.altKey && (event.key === '.' || event.code === 'Period')) {
+				event.preventDefault()
+				useStore.getState().toggle('settingsOpen')
+			} else if (mod && event.shiftKey && event.key.toLowerCase() === 'p') {
 				event.preventDefault()
 				useStore.getState().toggle('paletteOpen')
 			} else if (mod && event.key.toLowerCase() === 't') {
@@ -72,7 +73,6 @@ export function App(): React.JSX.Element {
 				</Allotment>
 			</div>
 			<StatusBar />
-			{pythonOpen && <PythonDialog />}
 			{settingsOpen && <SettingsDialog />}
 			<Palette />
 		</div>
