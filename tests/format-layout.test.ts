@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classify, columnsOf, compareValues, formatCell, formatDuration, humanSize, isQuietLine, toCsv } from '../src/renderer/src/lib/format'
+import { classify, columnsOf, compareValues, formatCell, formatDuration, humanSize, isQuietLine, previewPathOf, toCsv } from '../src/renderer/src/lib/format'
 import { paneIds, removePane, splitPane, type LayoutNode } from '../src/renderer/src/lib/layout'
 
 describe('format', () => {
@@ -38,6 +38,11 @@ describe('format', () => {
 		expect(formatDuration(12)).toBe('12ms')
 		expect(formatDuration(1500)).toBe('1.50s')
 		expect(formatDuration(12000)).toBe('12.0s')
+	})
+	it('previewPathOf reads a preview record and ignores other rows', () => {
+		expect(previewPathOf([{ $t: 'preview', fullpath: '/tmp/a.txt' }])).toBe('/tmp/a.txt')
+		expect(previewPathOf([{ name: 'a' }, { $t: 'text', fullpath: '/tmp/a.txt' }])).toBeNull()
+		expect(previewPathOf([{ $t: 'preview' }])).toBeNull()
 	})
 	it('isQuietLine only matches a plain cd', () => {
 		expect(isQuietLine('cd')).toBe(true)

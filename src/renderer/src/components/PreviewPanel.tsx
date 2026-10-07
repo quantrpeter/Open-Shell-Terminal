@@ -29,7 +29,7 @@ export function PreviewPanel(): React.JSX.Element {
 	}, [path])
 
 	const body = (): React.JSX.Element => {
-		if (!path) return <div className="muted pad">Click a file to preview it.</div>
+		if (!path) return <div className="muted pad">Click a file, or run preview FILE.</div>
 		if (!preview) return <div className="muted pad">Loading&hellip;</div>
 		switch (preview.kind) {
 			case 'text':

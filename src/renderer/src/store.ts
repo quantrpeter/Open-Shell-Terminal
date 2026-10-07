@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { AppInfo, CommandInfo, EngineInfo, PaneEvent, PythonRuntime, RunSummary, ShellErrorRecord } from '../../shared/types'
 import { isUnder, samePath } from '../../shared/paths'
 import { shellQuote } from '../../shared/quote'
+import { previewPathOf } from './lib/format'
 import { paneIds, removePane, splitPane, type Direction, type LayoutNode } from './lib/layout'
 
 export type BlockStatus = 'running' | 'done' | 'failed' | 'cancelled'
@@ -160,6 +161,7 @@ export const useStore = create<Store>((set, get) => {
 	}
 
 	const handleEvent = ({ paneId, runId, event }: PaneEvent): void => {
+		const previewPath = event.type === 'records' ? previewPathOf(event.data) : null
 		patchBlock(paneId, runId, (block) => {
 			if (event.type === 'records') {
 				for (const record of event.data) block.records.push(record)
@@ -169,6 +171,7 @@ export const useStore = create<Store>((set, get) => {
 			const status: BlockStatus = event.result.cancelled ? 'cancelled' : event.result.failed ? 'failed' : 'done'
 			return { ...block, status, summary: event.result, version: block.version + 1 }
 		})
+		if (previewPath) set({ previewPath, showPreview: true })
 		if (event.type === 'done' && event.result.cwd) {
 			patchPane(paneId, (pane) => ({ ...pane, cwd: event.result.cwd }))
 		}

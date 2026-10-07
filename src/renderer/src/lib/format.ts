@@ -105,6 +105,15 @@ export function formatDuration(ms: number): string {
 	return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(ms < 10000 ? 2 : 1)}s`
 }
 
+// A `preview FILE` record asks the host to open the preview panel.
+export function previewPathOf(records: unknown[]): string | null {
+	for (const record of records) {
+		if (!isRow(record) || record.$t !== 'preview') continue
+		if (typeof record.fullpath === 'string' && record.fullpath) return record.fullpath
+	}
+	return null
+}
+
 // Commands whose output is not worth showing: a plain `cd`, not part of a pipeline.
 export function isQuietLine(line: string): boolean {
 	return /^\s*cd(\s|$)/.test(line) && !line.includes('|')
