@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useStore, type SettingsTab } from '../store'
 import { EnvironmentPanel } from './EnvironmentPanel'
 import { GeneralPanel } from './GeneralPanel'
+import { Icon } from './Icon'
 import { PythonPanel } from './PythonPanel'
 
 const TABS: { id: SettingsTab; label: string }[] = [
@@ -32,7 +33,7 @@ export function SettingsDialog(): React.JSX.Element {
 				<div className="settings-head">
 					<span>Settings</span>
 					<button type="button" className="icon-btn" onClick={close} title="Close">
-						×
+						<Icon name="close" />
 					</button>
 				</div>
 				<div className="settings-tabs" role="tablist">

@@ -4,6 +4,7 @@ import { basename } from '../../../shared/paths'
 import type { LayoutNode } from '../lib/layout'
 import { useStore } from '../store'
 import { BlockView } from './BlockView'
+import { Icon } from './Icon'
 import { Prompt } from './Prompt'
 
 function PaneView({ paneId }: { paneId: string }): React.JSX.Element {
@@ -28,7 +29,7 @@ function PaneView({ paneId }: { paneId: string }): React.JSX.Element {
 				<div className="pane-head">
 					<span title={pane.cwd}>{basename(pane.cwd) || pane.cwd}</span>
 					<button className="icon-btn" title="Close pane" onClick={() => closePane(paneId)}>
-						&times;
+						<Icon name="close" />
 					</button>
 				</div>
 			)}

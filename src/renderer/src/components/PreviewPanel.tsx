@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Preview } from '../../../shared/types'
 import { useStore } from '../store'
+import { Icon } from './Icon'
 
 function prettyJson(text: string): string {
 	try {
@@ -58,7 +59,7 @@ export function PreviewPanel(): React.JSX.Element {
 					{preview && 'name' in preview ? preview.name : 'Preview'}
 				</span>
 				<button className="icon-btn" title="Close preview" onClick={() => (setPreview(null), toggle('showPreview'))}>
-					&times;
+					<Icon name="close" />
 				</button>
 			</div>
 			<div className="preview-body">{body()}</div>

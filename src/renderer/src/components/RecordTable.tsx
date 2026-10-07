@@ -1,5 +1,6 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { columnsOf, compareValues, formatCell, type Row } from '../lib/format'
+import { Icon } from './Icon'
 
 // Rows rendered before "Show all"; keeps a huge result from freezing the page.
 const ROW_CAP = 5000
@@ -62,7 +63,11 @@ export function RecordTable({ rows, version, filter, onCd }: Props): React.JSX.E
 						{columns.map((column) => (
 							<th key={column} className={numeric.has(column) ? 'num' : ''} onClick={() => toggleSort(column)}>
 								{column}
-								{sort?.column === column && <span className="arrow">{sort.dir === 1 ? ' \u25b2' : ' \u25bc'}</span>}
+								{sort?.column === column && (
+									<span className="sort-icon">
+										<Icon name={sort.dir === 1 ? 'arrow_upward' : 'arrow_downward'} />
+									</span>
+								)}
 							</th>
 						))}
 					</tr>

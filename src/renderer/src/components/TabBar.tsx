@@ -1,5 +1,6 @@
 import { basename } from '../../../shared/paths'
 import { useStore } from '../store'
+import { Icon } from './Icon'
 
 export function TabBar(): React.JSX.Element {
 	const tabs = useStore((s) => s.tabs)
@@ -31,25 +32,24 @@ export function TabBar(): React.JSX.Element {
 									event.stopPropagation()
 									state().closeTab(tab.id)
 								}}
-							>
-								&times;
+							><Icon name="close" />
 							</button>
 						</div>
 					)
 				})}
 				<button className="icon-btn" title="New tab" onClick={() => state().newTab()}>
-					+
+					<Icon name="add" />
 				</button>
 			</div>
 			<div className="tabbar-actions">
 				<button className="icon-btn" title="Split right" onClick={() => state().split('row')}>
-					&#9707;
+					<Icon name="vertical_split" />
 				</button>
 				<button className="icon-btn" title="Split down" onClick={() => state().split('column')}>
-					&#9708;
+					<Icon name="horizontal_split" />
 				</button>
 				<button className="icon-btn" title="Command palette" onClick={() => state().toggle('paletteOpen')}>
-					&#8984;
+					<Icon name="search" />
 				</button>
 			</div>
 		</div>

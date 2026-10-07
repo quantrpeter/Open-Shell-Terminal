@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { classify, formatDuration, isQuietLine, toCsv } from '../lib/format'
 import { shellQuote } from '../../../shared/quote'
 import { useStore, type Block } from '../store'
+import { Icon } from './Icon'
 import { RecordTable } from './RecordTable'
 
 const MAX_LOG_LINES = 5000
@@ -111,8 +112,8 @@ export function BlockView({ paneId, block }: { paneId: string; block: Block }): 
 					)}
 					{hasData && <CopyButton label="Copy" text={() => JSON.stringify(block.records, null, 2)} />}
 					{hasData && view.kind === 'table' && <CopyButton label="CSV" text={() => toCsv(view.rows)} />}
-					<button className="btn" title="Remove block" onClick={() => removeBlock(paneId, block.id)}>
-						&times;
+					<button className="btn icon-btn" title="Remove block" onClick={() => removeBlock(paneId, block.id)}>
+						<Icon name="close" />
 					</button>
 				</div>
 			</div>

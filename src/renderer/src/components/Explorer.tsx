@@ -4,6 +4,7 @@ import type { DirEntry } from '../../../shared/types'
 import { basename, breadcrumbs, chain, dirname, isUnder, samePath } from '../../../shared/paths'
 import { shellQuote } from '../../../shared/quote'
 import { useStore } from '../store'
+import { Icon } from './Icon'
 
 type Listing = { state: 'loading' } | { state: 'ready'; entries: DirEntry[] } | { state: 'error'; message: string }
 
@@ -201,17 +202,17 @@ export function Explorer(): React.JSX.Element {
 			<div className="explorer-head">
 				<span className="explorer-title">Explorer</span>
 				<button className="icon-btn" title="Parent folder as root" onClick={() => setExplorerRoot(dirname(root))}>
-					&#8593;
+					<Icon name="arrow_upward" />
 				</button>
 				<button className="icon-btn" title="Home as root" onClick={() => setExplorerRoot(home)}>
-					&#8962;
+					<Icon name="home" />
 				</button>
 				<button
 					className={showHidden ? 'icon-btn active' : 'icon-btn'}
 					title="Show hidden files"
 					onClick={() => toggle('showHidden')}
 				>
-					.*
+					<Icon name="visibility" />
 				</button>
 			</div>
 			<div className="crumbs" title={root}>
@@ -244,8 +245,8 @@ export function Explorer(): React.JSX.Element {
 								})
 							}}
 						>
-							<span className="fav-pin" aria-hidden="true">
-								&#9733;
+							<span className="fav-pin">
+								<Icon name="star" />
 							</span>
 							<span className="tree-name">{basename(path)}</span>
 							<button
@@ -256,7 +257,7 @@ export function Explorer(): React.JSX.Element {
 									toggleFavorite(path)
 								}}
 							>
-								&#215;
+								<Icon name="close" />
 							</button>
 						</div>
 					))}
@@ -292,9 +293,11 @@ export function Explorer(): React.JSX.Element {
 										if (row.isDir) toggleDir(row)
 									}}
 								>
-									{row.isDir ? (row.expanded ? '\u25be' : '\u25b8') : ''}
+									{row.isDir && <Icon name={row.expanded ? 'expand_more' : 'chevron_right'} />}
 								</span>
-								<span className={row.isDir ? 'file-icon dir' : 'file-icon'}>{row.isDir ? '\u25a0' : '\u25a1'}</span>
+								<span className={row.isDir ? 'file-icon dir' : 'file-icon'}>
+									<Icon name={row.isDir ? 'folder' : 'draft'} />
+								</span>
 								<span className="tree-name">{row.depth === 0 ? row.name.split(/[\\/]/).filter(Boolean).pop() || row.name : row.name}</span>
 								{row.listing?.state === 'loading' && <span className="tree-note">&hellip;</span>}
 								{row.listing?.state === 'error' && (

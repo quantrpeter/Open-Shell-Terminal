@@ -1,4 +1,5 @@
 import { useStore, type Theme } from '../store'
+import { Icon } from './Icon'
 
 const NEXT: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'system' }
 
@@ -25,9 +26,11 @@ export function StatusBar(): React.JSX.Element {
 				onClick={() => state().toggle('showExplorer')}
 				title="Toggle explorer"
 			>
+				<Icon name="folder_open" />
 				Explorer
 			</button>
 			<button className="status-btn" onClick={() => state().toggle('showPreview')} title="Toggle preview">
+				<Icon name="preview" />
 				Preview
 			</button>
 			<span className="status-cwd" title={cwd}>
@@ -36,6 +39,7 @@ export function StatusBar(): React.JSX.Element {
 			{hint && <span className="status-warn">{hint}</span>}
 			{running > 0 && <span className="status-running">{running} running</span>}
 			<button className="status-btn" onClick={() => state().setTheme(NEXT[theme])} title="Theme">
+				<Icon name={theme === 'dark' ? 'dark_mode' : theme === 'light' ? 'light_mode' : 'contrast'} />
 				Theme: {theme}
 			</button>
 			<button
@@ -46,6 +50,7 @@ export function StatusBar(): React.JSX.Element {
 				{python?.version ? `Python ${python.version}` : 'Python'}
 			</button>
 			<button className="status-btn" onClick={() => state().toggle('settingsOpen')} title="Settings (Ctrl/Cmd + .)">
+				<Icon name="settings" />
 				Settings
 			</button>
 			<span className="muted">
