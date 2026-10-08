@@ -1,5 +1,10 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join as joinPath } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { isPythonExecutable, pythonNames } from '../src/main/paths'
+import { readWindowState, visibleWindowState, writeWindowState, type WindowState } from '../src/main/window-state'
+import type { Rectangle, Screen } from 'electron'
 import { basename, breadcrumbs, chain, dirname, isRoot, isUnder, join, samePath } from '../src/shared/paths'
 import { shellQuote } from '../src/shared/quote'
 
@@ -61,6 +66,34 @@ describe('python executable names', () => {
 		expect(isPythonExecutable('python3', 'win32')).toBe(false)
 		expect(isPythonExecutable('python3.14.exe', 'win32')).toBe(true)
 		expect(isPythonExecutable('python3-config', 'darwin')).toBe(false)
+	})
+})
+
+function screenOf(areas: Rectangle[]): Screen {
+	return { getAllDisplays: () => areas.map((workArea) => ({ workArea })) } as unknown as Screen
+}
+
+describe('window state', () => {
+	const saved: WindowState = { x: 40, y: 20, width: 900, height: 600, maximized: true }
+
+	it('round-trips bounds and drops a corrupt file', () => {
+		const dir = mkdtempSync(joinPath(tmpdir(), 'oshell-win-'))
+		try {
+			writeWindowState(dir, saved)
+			expect(readWindowState(dir)).toEqual(saved)
+			expect(JSON.parse(readFileSync(joinPath(dir, 'window.json'), 'utf8'))).toEqual(saved)
+			writeFileSync(joinPath(dir, 'window.json'), '{')
+			expect(readWindowState(dir)).toBeNull()
+		} finally {
+			rmSync(dir, { recursive: true, force: true })
+		}
+	})
+
+	it('keeps a frame that still meets a display and drops one that does not', () => {
+		const displays = screenOf([{ x: 0, y: 0, width: 1440, height: 900 }])
+		expect(visibleWindowState(saved, displays)).toEqual(saved)
+		expect(visibleWindowState({ ...saved, x: 4000 }, displays)).toBeNull()
+		expect(visibleWindowState(null, displays)).toBeNull()
 	})
 })
 

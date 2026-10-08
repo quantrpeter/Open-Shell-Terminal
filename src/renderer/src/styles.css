@@ -696,6 +696,20 @@ table.records td.link {
 table.records td.link:hover {
 	text-decoration: underline;
 }
+table.records td.thumb {
+	width: 28px;
+	text-decoration: none;
+}
+table.records td.thumb:hover {
+	text-decoration: none;
+}
+.row-thumb {
+	display: block;
+	width: 22px;
+	height: 22px;
+	object-fit: cover;
+	background: var(--hover);
+}
 table.records tr.table-row:hover td {
 	background: var(--hover);
 }

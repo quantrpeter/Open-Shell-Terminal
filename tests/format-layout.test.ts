@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { classify, columnsOf, compareValues, formatCell, formatDuration, humanSize, isQuietLine, previewPathOf, toCsv } from '../src/renderer/src/lib/format'
+import { fileUrl, isImageName } from '../src/renderer/src/lib/image'
 import { paneIds, removePane, splitPane, type LayoutNode } from '../src/renderer/src/lib/layout'
+
+describe('image rows', () => {
+	it('treats common image names as thumbnails', () => {
+		expect(isImageName('a.png')).toBe(true)
+		expect(isImageName('photo.JPEG')).toBe(true)
+		expect(isImageName('notes.txt')).toBe(false)
+		expect(isImageName('png')).toBe(false)
+	})
+	it('builds an oshell-file url', () => {
+		expect(fileUrl('/tmp/a.png')).toBe('oshell-file://local/%2Ftmp%2Fa.png')
+	})
+})
 
 describe('format', () => {
 	it('humanSize matches the shell', () => {

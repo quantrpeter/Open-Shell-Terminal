@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, protocol, shell, session, type WebContents } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, protocol, screen, shell, session, type WebContents } from 'electron'
 import { execFileSync } from 'node:child_process'
 import { createReadStream, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -17,6 +17,7 @@ import {
 	type EngineCommand,
 	type PythonChoice
 } from './paths'
+import { captureWindowState, DEFAULT_WINDOW, readWindowState, visibleWindowState, writeWindowState } from './window-state'
 
 let engineCommand: EngineCommand = { python: '', script: '' }
 let selectedPython: string | null = null
@@ -318,7 +319,7 @@ function hardenSession(): void {
 			responseHeaders: {
 				...details.responseHeaders,
 				'Content-Security-Policy': [
-					"default-src 'self'; img-src 'self' data:; media-src 'self' oshell-file:; frame-src 'self' oshell-file:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+					"default-src 'self'; img-src 'self' data: oshell-file:; media-src 'self' oshell-file:; frame-src 'self' oshell-file:; style-src 'self' 'unsafe-inline'; script-src 'self'"
 				]
 			}
 		})
@@ -326,9 +327,9 @@ function hardenSession(): void {
 }
 
 function createWindow(): void {
+	const saved = visibleWindowState(readWindowState(app.getPath('userData')), screen)
 	window = new BrowserWindow({
-		width: 1360,
-		height: 860,
+		...(saved ?? DEFAULT_WINDOW),
 		minWidth: 720,
 		minHeight: 480,
 		show: false,
@@ -342,6 +343,19 @@ function createWindow(): void {
 			sandbox: true
 		}
 	})
+	if (saved?.maximized) window.maximize()
+	const remember = (): void => {
+		if (!window) return
+		try {
+			writeWindowState(app.getPath('userData'), captureWindowState(window))
+		} catch {
+			// A failed write must not take the window down; the next move retries.
+		}
+	}
+	window.on('resize', remember)
+	window.on('move', remember)
+	window.on('maximize', remember)
+	window.on('unmaximize', remember)
 	window.once('ready-to-show', () => window?.show())
 	window.on('closed', () => {
 		window = null

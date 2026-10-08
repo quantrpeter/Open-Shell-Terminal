@@ -1,5 +1,6 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { columnsOf, compareValues, formatCell, type Row } from '../lib/format'
+import { fileUrl, isImageName } from '../lib/image'
 import { Icon } from './Icon'
 
 // Rows rendered before "Show all"; keeps a huge result from freezing the page.
@@ -83,10 +84,12 @@ export function RecordTable({ rows, version, filter, onCd, onOpen }: Props): Rea
 									const raw = row[column]
 									const text = formatCell(column, raw)
 									const link = column === 'name' && filePath !== null
+									const image = link && dirPath === null && isImageName(String(row.name ?? ''))
 									const classes: string[] = []
 									if (numeric.has(column)) classes.push('num')
 									if (raw === null || raw === undefined) classes.push('null')
 									if (link) classes.push('link')
+									if (image) classes.push('thumb')
 									if (text.length > 60) classes.push('wrap')
 									return (
 										<td
@@ -95,7 +98,11 @@ export function RecordTable({ rows, version, filter, onCd, onOpen }: Props): Rea
 											title={link ? (dirPath ? `cd ${dirPath}` : filePath) : undefined}
 											onClick={link ? () => (dirPath ? onCd(dirPath) : onOpen(filePath)) : undefined}
 										>
-											{text}
+											{image && filePath ? (
+												<img className="row-thumb" src={fileUrl(filePath)} alt="" />
+											) : (
+												text
+											)}
 										</td>
 									)
 								})}

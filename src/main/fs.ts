@@ -104,7 +104,7 @@ const SHEET_COLS = 26
 export function mediaType(path: string): string | null {
 	const ext = extname(path).toLowerCase()
 	if (ext === '.pdf') return 'application/pdf'
-	return VIDEO_TYPES[ext] ?? null
+	return IMAGE_TYPES[ext] ?? VIDEO_TYPES[ext] ?? null
 }
 
 export async function readPreview(path: string, mediaUrl?: (path: string) => string, bytes?: Buffer): Promise<Preview> {
