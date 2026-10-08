@@ -98,11 +98,7 @@ export function RecordTable({ rows, version, filter, onCd, onOpen }: Props): Rea
 											title={link ? (dirPath ? `cd ${dirPath}` : filePath) : undefined}
 											onClick={link ? () => (dirPath ? onCd(dirPath) : onOpen(filePath)) : undefined}
 										>
-											{image && filePath ? (
-												<img className="row-thumb" src={fileUrl(filePath)} alt="" />
-											) : (
-												text
-											)}
+											{text}
 										</td>
 									)
 								})}
